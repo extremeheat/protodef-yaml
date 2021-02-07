@@ -116,17 +116,25 @@ function toYAML(file) {
 }
 
 function parseYAML(lines, outFile = 'inter.json') {
-    yaml.loadAll(lines.join('\n'), function (doc) {
-        log(doc)
-        fs.writeFileSync(outFile, JSON.stringify(doc, null, 2))
-    })
+    try {
+        yaml.loadAll(lines.join('\n'), function (doc) {
+            log(doc)
+            fs.writeFileSync(outFile, JSON.stringify(doc, null, 2))
+        })        
+    } catch (e) {
+        if (e instanceof yaml.YAMLException) {
+            delete e.mark // remove logging spam
+        }
+        throw e
+    }
 }
 
 function transform(json, outFile) {
     json = json || require('./inter.json')
 
     while (recurse2(json) == 'updated') log('Updated.') // fix ../ switch compareTo variables
-
+    recurse2(json, true) // clear debug keys
+    // console.log(json)
     ctx = []
 
     function visitArray(obj, name, countType, count, ctx) {
@@ -144,6 +152,7 @@ function transform(json, outFile) {
         } else {
             const len = Object.keys(obj).length
             const first = Object.keys(obj)[0]
+            // log('F', first, name, Object.keys(obj), first.startsWith('%array'))
             if (len == 1 && first.startsWith('%array') || first.startsWith('%switch')) { //remove container nested array
                 if (name) {
                     const a = { countType, count, type: [] }
@@ -200,7 +209,7 @@ function transform(json, outFile) {
                             let _val = val[_key]
                             if (_key.startsWith('%array')) {
                                 const [, name, type, countType] = _key.split(',')
-                                const tokens = name.replace('if ', '').split('or')
+                                const tokens = name.replace('if ', '').split(' or ')
 
                                 for (var token of tokens) {
                                     token = token.trim()
@@ -213,7 +222,7 @@ function transform(json, outFile) {
                                     }
                                 }
                             } else if (_key.startsWith('if')) {
-                                const tokens = _key.replace('if ', '').split('or')
+                                const tokens = _key.replace('if ', '').split(' or ')
                                 for (var token of tokens) {
                                     token = token.trim()
                                     as[token] = typeof _val == 'string' ? _val : ['container', []]
@@ -297,16 +306,22 @@ function rename(o, oldKey, newKey) {
 }
 
 // add ../
-function recurse2(obj) {
+function recurse2(obj, clear) {
     for (const key in obj) {
         let val = obj[key]
         if (val && typeof val == 'object') {
             // log('.',obj, val)
-            val.parent = () => obj
-            val.key = () => key
-            // val.visits = val.visits ? val.visits++ : 1
-            recurse2(val)
+            if (clear) { // remove extraneous keys when we are done
+                delete obj[key]['parent']
+                delete obj[key]['key']
+            } else {
+                val.parent = () => obj
+                val.key = () => key
+            }
+
+            recurse2(val, clear)
         }
+        if (clear) continue
 
         if (key.startsWith('%switch')) {
             const [, name, switchVar] = key.replace('?', '').split(',')
