@@ -52,6 +52,7 @@ function toYAML(file) {
             if (key.startsWith('#')) continue
             key = key.trim(); val = val ? val.trim() : ''
             if (key == '_') key = '__' + i
+            if (!key) continue
             if (key.startsWith('!')) {
 
                 if (key == '!import' && !imported.includes(val)) {
@@ -181,7 +182,7 @@ function transform(json, outFile) {
                     const args = key.split(',')
                     if (key.startsWith('%map')) {
                         const [, name, mappingType] = args
-                        Array.isArray(ctx) ? ctx.push({
+                        ctx.push({
                             name,
                             type: [
                                 'mapper',
@@ -190,7 +191,7 @@ function transform(json, outFile) {
                                     mappings: val
                                 }
                             ]
-                        }) : null
+                        })
                     } else if (key.startsWith('%switch')) {
                         let [, name, cmp] = args
                         let as = {}
@@ -229,7 +230,7 @@ function transform(json, outFile) {
                         let anon
                         if (name.startsWith('__')) { name = undefined; anon = true }
 
-                        Array.isArray(ctx) ? ctx.push({
+                        ctx.push({
                             name,
                             anon,
                             type: [
@@ -240,7 +241,7 @@ function transform(json, outFile) {
                                     default: def.length ? def : 'void'
                                 }
                             ]
-                        }) : null
+                        })
                     } else if (key.startsWith('%array')) {
                         const [, name, type, countType] = args
 
@@ -252,7 +253,7 @@ function transform(json, outFile) {
                         const [, cname] = args
 
                         const name = cname.startsWith('__') ? undefined : cname
-                        const anon = undefined
+                        let anon = undefined
                         if (!name) anon = true
                         ctx.push({ name, anon, type: ['container', []] })
                         trans(val, ctx[ctx.length - 1].type[1])
