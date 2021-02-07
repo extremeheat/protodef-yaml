@@ -30,7 +30,7 @@ function pad(indentation, line) {
 }
 
 // make valid yaml
-function toYAML(file) {
+function toYAML(file, followImports = true) {
 
     var imported = []
     function checkIfJson(key, val) { //  ¯\(°_o)/¯
@@ -44,9 +44,9 @@ function toYAML(file) {
     let data = fs.readFileSync(file, 'utf8')
     data = data.replace(/\t/g, '    ')
     const lines = data.split('\n')
-    let modified = false
 
     function pars() {
+        let modified = false
         for (var i = 0; i < lines.length; i++) {
             let [key, val] = lines[i].trim().split(':', 2)
             if (key.startsWith('#')) continue
@@ -55,7 +55,7 @@ function toYAML(file) {
             if (!key) continue
             if (key.startsWith('!')) {
 
-                if (key == '!import' && !imported.includes(val)) {
+                if (key == '!import' && !imported.includes(val) && followImports) {
                     if (modified) {
                         throw Error('Incorrectly placed import, place it ontop of the file')
                     }
@@ -65,8 +65,9 @@ function toYAML(file) {
                     lines.splice(i, 0, ...imp.split('\n'))
                     return true
                 }
-
-                let nkey = key.replace('!', "'!"); nkey += "'";
+                let nkey = key.replace('!', "'!")
+                if (key == '!import') nkey += ',' + i
+                nkey += "'";
                 lines[i] = lines[i].replace(key, nkey)
             }
 
@@ -381,14 +382,21 @@ function formFinal(inp, out) {
     fs.writeFileSync(out || './compiled_proto.json', JSON.stringify(ret, null, 2))
 }
 
+function getIntermediate(inputFile) {
+    const temp = __dirname + '/inter.json'
+    parseYAML(toYAML(inputFile), temp)
+    return require(temp)
+}
 
-module.exports = (inputFile, outputFile) => {
+function compile(inputFile, outputFile) {
     const temp = __dirname + '/inter.json'
     const out = __dirname + '/compiled_proto.json'
     parseYAML(toYAML(inputFile), temp)
     transform(require(temp), out)
     formFinal(out, outputFile)
 }
+
+module.exports = { compile, parse: getIntermediate }
 
 if (!module.parent) {
     console.info('args ', process.argv)

@@ -1,4 +1,4 @@
-const compile = require('../compiler')
+const { compile } = require('../compiler')
 const fs = require('fs')
 const crypto = require('crypto')
 

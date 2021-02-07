@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-const compile = require('./compiler')
+const { compile } = require('./compiler')
 
 if (!process.argv[2]) {
     console.warn('usage: protoyaml <inputYAML> [outputJSON]')
