@@ -1,7 +1,7 @@
 const fs = require('fs')
 const yaml = require('js-yaml')
 
-console.log = () => { }
+const log = () => { }
 
 function detectIndentation(lines) {
     const indentationLevel = 0
@@ -14,7 +14,7 @@ function detectIndentation(lines) {
 }
 
 function getIndentation(line) {
-    // console.log(line)
+    // log(line)
     let ind = 0
     for (var c of line) {
         if (c == ' ') ind++
@@ -74,10 +74,10 @@ function toYAML(file) {
                 continue
             }
 
-            console.log('i', i, val)
+            log('i', i, val)
             let thisLevel = getIndentation(lines[i])
             let nextLevel = getIndentation(lines[i + 1] || '')
-            console.log(thisLevel, nextLevel, nextLevel > thisLevel, val.trim())
+            log(thisLevel, nextLevel, nextLevel > thisLevel, val.trim())
             let isParent = nextLevel > thisLevel
             if (isParent) {
                 modified = true
@@ -93,7 +93,7 @@ function toYAML(file) {
                     val = val.replace('?', '').trim()
                     lines[i] = pad(thisLevel, `"%switch,${key},${val}":`)
                 } else if (val && !val.startsWith('#')) {
-                    console.log(val)
+                    log(val)
                     throw Error(`Unexpected child block at line ${i}`)
                 } else if (!key.startsWith('if')) {
                     lines[i] = pad(thisLevel, `"%container,${key},${val}":`)
@@ -109,14 +109,14 @@ function toYAML(file) {
     }
     while (pars()) { console.info('Importing', imported[imported.length - 1]) }
 
-    console.log(lines)
+    log(lines)
     // fs.writeFileSync(__dirname + '/inter.yaml', lines.join('\n'))
     return lines
 }
 
 function parseYAML(lines, outFile = 'inter.json') {
     yaml.loadAll(lines.join('\n'), function (doc) {
-        console.log(doc)
+        log(doc)
         fs.writeFileSync(outFile, JSON.stringify(doc, null, 2))
     })
 }
@@ -124,12 +124,12 @@ function parseYAML(lines, outFile = 'inter.json') {
 function transform(json, outFile) {
     json = json || require('./inter.json')
 
-    while (recurse2(json) == 'updated') console.log('Updated.') // fix ../ switch compareTo variables
+    while (recurse2(json) == 'updated') log('Updated.') // fix ../ switch compareTo variables
 
     ctx = []
 
     function visitArray(obj, name, countType, count, ctx) {
-        console.log('OBJ', obj)
+        log('OBJ', obj)
         if (countType.startsWith('$')) {
             count = countType.slice(1)
             countType = undefined
@@ -148,13 +148,13 @@ function transform(json, outFile) {
                     const a = { countType, count, type: [] }
                     ctx.push({ name, type: ['array', a] })
                     trans(obj, a.type)
-                    //   console.log('atn0-------',name,a.type)
+                    //   log('atn0-------',name,a.type)
                     if (!a.type[0].name || a.type[0].name.startsWith('__')) a.type = a.type[0].type
                 } else {
                     const a = { countType, count, type: [] }
                     ctx.push('array', a)
                     trans(obj, a.type)
-                    //   console.log('atn1',a.type)
+                    //   log('atn1',a.type)
                     if (!a.type[0].name || a.type[0].name.startsWith('__')) a.type = a.type[0].type
                 }
             } else {
@@ -244,7 +244,7 @@ function transform(json, outFile) {
                     } else if (key.startsWith('%array')) {
                         const [, name, type, countType] = args
 
-                        console.log(val, typeof val, obj)
+                        log(val, typeof val, obj)
                         if (type && val && typeof val == 'object') throw Error('Array has a type and body: ' + name)
 
                         visitArray(val || type, name, countType, undefined, ctx)
@@ -258,14 +258,14 @@ function transform(json, outFile) {
                         trans(val, ctx[ctx.length - 1].type[1])
                     }
                 } else {
-                    // console.log(ctx)
+                    // log(ctx)
                     // Probably JSON, leave as is
                 }
             } else if (typeof val == 'string') {
                 if (key.startsWith('!')) continue
                 ctx.push({ name: key, type: val })
             }
-            console.log(key, typeof val)
+            log(key, typeof val)
         }
     }
 
@@ -275,12 +275,12 @@ function transform(json, outFile) {
     for (var key in json) {
         let val = json[key]
         if (typeof val == 'object' && !key.startsWith('%')) {
-            console.log('pushing ext', { name: key, type: val })
+            log('pushing ext', { name: key, type: val })
             ctx.push({ name: key, type: val })
         }
     }
 
-    // console.log('ctx', JSON.stringify(ctx, null, 2))
+    // log('ctx', JSON.stringify(ctx, null, 2))
     fs.writeFileSync(outFile || 'compiled_proto.json', JSON.stringify(ctx, null, 2))
 }
 
@@ -300,7 +300,7 @@ function recurse2(obj) {
     for (const key in obj) {
         let val = obj[key]
         if (val && typeof val == 'object') {
-            // console.log('.',obj, val)
+            // log('.',obj, val)
             val.parent = () => obj
             val.key = () => key
             // val.visits = val.visits ? val.visits++ : 1
@@ -320,7 +320,7 @@ function recurse2(obj) {
             }
 
             if (!found) {
-                console.log('Unknown switch variable:', switchVar)
+                log('Unknown switch variable:', switchVar)
             }
 
 
@@ -334,15 +334,15 @@ function recurse2(obj) {
                     const _val = _obj[_key]
                     const _name = getName(_key)
                     if (_name == switchVar) {
-                        console.log(`Was found !`, _key)
+                        log(`Was found !`, _key)
 
-                        console.log('Depth: ', depth)
+                        log('Depth: ', depth)
                         const fil = depth.filter(e => !e.startsWith('if ') && getName(e) != 'default')
-                        // console.log('De', fil)
+                        // log('De', fil)
                         let s = ''
                         for (var j = 0; j < fil.length - 1; j++) s += '../'
                         rename(obj, key, key.replace(switchVar, s + switchVar))
-                        console.log('RENAME', obj, key, key.replace(switchVar, s + switchVar))
+                        log('RENAME', obj, key, key.replace(switchVar, s + switchVar))
                         return 'updated'
                     }
                 }

@@ -13,7 +13,8 @@ const hash = sha1('compiled_proto.json')
 console.info('sha1', hash)
 const expected = 'e9d05e6016079fa67e3c5a4090ae2921cfc09ec0'
 if (hash !== expected) {
-    throw Error('Unexpected hash: ', hash, '!=', expected)
+    console.error('Unexpected hash: ', hash, '!=', expected)
+    throw Error('Unexpected hash')
 } else {
     console.info('✔ ok')
 }
