@@ -10,7 +10,7 @@ for (var file of ['file.yml', 'file2.yml']) {
 
 console.log('Testing proto.yml')
 
-compile('./proto.yaml')
+compile('./proto.yaml', './proto.json')
 
 function sha1(file) {
     const data = fs.readFileSync(file);
@@ -19,7 +19,7 @@ function sha1(file) {
 
 const hash = sha1('proto.json')
 console.info('sha1', hash)
-const expected = 'e9d05e6016079fa67e3c5a4090ae2921cfc09ec0'
+const expected = 'dc910b6e000fbd9a318110f3cc303c16e2d1aaea'
 if (hash !== expected) {
     console.error('Unexpected hash: ', hash, '!=', expected)
     throw Error('Unexpected hash')
