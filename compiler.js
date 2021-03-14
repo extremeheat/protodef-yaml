@@ -1,8 +1,6 @@
 const fs = require('fs')
 const yaml = require('js-yaml')
 
-const log = () => { }
-
 function detectIndentation(lines) {
     const indentationLevel = 0
     for (var line of lines) {
@@ -41,6 +39,9 @@ function toYAML(file, followImports = true) {
         return false
     }
 
+    function validateKey(line, key) {
+    }
+
     let data = fs.readFileSync(file, 'utf8')
     data = data.replace(/\t/g, '    ')
     const lines = data.split('\n')
@@ -72,9 +73,11 @@ function toYAML(file, followImports = true) {
             }
 
             if (checkIfJson(key, val)) {
-                console.info('Ignoring JSON', lines[i])
+                // console.debug('Ignoring JSON', lines[i])
                 continue
             }
+
+            validateKey(lines[i], key)
 
             log('i', i, val)
             let thisLevel = getIndentation(lines[i])
@@ -95,7 +98,10 @@ function toYAML(file, followImports = true) {
                     val = val.replace('?', '').trim()
                     lines[i] = pad(thisLevel, `"%switch,${key},${val}":`)
                 } else if (val && !val.startsWith('#')) {
-                    log(val)
+                    console.log('at ', lines[i - 1])
+                    console.log('AT ', lines[i])
+                    console.log('at ', lines[i + 1])
+                    console.log(val)
                     throw Error(`Unexpected child block at line ${i}`)
                 } else if (!key.startsWith('if')) {
                     lines[i] = pad(thisLevel, `"%container,${key},${val}":`)
@@ -133,8 +139,6 @@ function parseYAML(lines, outFile = 'inter.json') {
 function transform(json, outFile) {
     json = json || require('./inter.json')
 
-    while (recurse2(json) == 'updated') log('Updated.') // fix ../ switch compareTo variables
-    recurse2(json, true) // clear debug keys
     // console.log(json)
     ctx = []
 
@@ -153,20 +157,23 @@ function transform(json, outFile) {
         } else {
             const len = Object.keys(obj).length
             const first = Object.keys(obj)[0]
+            // Try to inline switch/array inside an array if only 1 item inside
             // log('F', first, name, Object.keys(obj), first.startsWith('%array'))
-            if (len == 1 && first.startsWith('%array') || first.startsWith('%switch')) { //remove container nested array
+            if (len == 1 && (first.startsWith('%array') || first.startsWith('%switch'))) { //remove container nested array
                 if (name) {
                     const a = { countType, count, type: [] }
                     ctx.push({ name, type: ['array', a] })
                     trans(obj, a.type)
                     //   log('atn0-------',name,a.type)
                     if (!a.type[0].name || a.type[0].name.startsWith('__')) a.type = a.type[0].type
+                    else a.type = [ 'container', [a.type[0]] ]
                 } else {
                     const a = { countType, count, type: [] }
                     ctx.push('array', a)
                     trans(obj, a.type)
                     //   log('atn1',a.type)
                     if (!a.type[0].name || a.type[0].name.startsWith('__')) a.type = a.type[0].type
+                    else a.type = [ 'container', [a.type[0]] ]
                 }
             } else {
                 if (name) {
@@ -274,6 +281,9 @@ function transform(json, outFile) {
                 }
             } else if (typeof val == 'string') {
                 if (key.startsWith('!')) continue
+                if (val.startsWith('[')) {
+                    val = JSON.parse(val)
+                }
                 ctx.push({ name: key, type: val })
             }
             log(key, typeof val)
@@ -383,8 +393,8 @@ function formFinal(inp, out) {
 }
 
 function getIntermediate(inputFile) {
-    const temp = __dirname + '/inter.json'
-    parseYAML(toYAML(inputFile), temp)
+    const temp = __dirname + '/inter0.json'
+    parseYAML(toYAML(inputFile, false), temp)
     return require(temp)
 }
 
@@ -398,9 +408,9 @@ function compile(inputFile, outputFile) {
 
 module.exports = { compile, parse: getIntermediate }
 
-if (!module.parent) {
-    console.info('args ', process.argv)
-    parseYAML(toYAML(process.argv[2] || './types.yaml'))
-    transform()
-    formFinal()
-}
+// if (!module.parent) {
+//     console.info('args ', process.argv)
+//     parseYAML(toYAML(process.argv[2] || './types.yaml'))
+//     transform()
+//     formFinal()
+// }
