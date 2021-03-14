@@ -1,6 +1,9 @@
 const fs = require('fs')
 const yaml = require('js-yaml')
 
+const getJSON = (file) => JSON.parse(fs.readFileSync(file, 'utf8'))
+const log = () => {}
+
 function detectIndentation(lines) {
     const indentationLevel = 0
     for (var line of lines) {
@@ -384,7 +387,7 @@ function recurse2(obj, clear) {
 
 
 function formFinal(inp, out) {
-    var j = require(inp || './compiled_proto.json')
+    var j = getJSON(inp || './compiled_proto.json')
     let ret = {}
     for (var entry of j) {
         ret[entry.name] = entry.type
@@ -395,14 +398,14 @@ function formFinal(inp, out) {
 function getIntermediate(inputFile) {
     const temp = __dirname + '/inter0.json'
     parseYAML(toYAML(inputFile, false), temp)
-    return require(temp)
+    return getJSON(temp)
 }
 
 function compile(inputFile, outputFile) {
     const temp = __dirname + '/inter.json'
     const out = __dirname + '/compiled_proto.json'
     parseYAML(toYAML(inputFile), temp)
-    transform(require(temp), out)
+    transform(getJSON(temp), out)
     formFinal(out, outputFile)
 }
 

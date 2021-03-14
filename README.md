@@ -5,13 +5,13 @@ Transforms YAML-like syntax to ProtoDef JSON schema
 ### Usage
 
 ```sh
-npm install -g extremeheat/protodef-yaml
+npm install -g protodef-yaml
 protodef-yaml <input yaml file> <output json file>
 ```
 
 or through npx,
 ```
-npx extremeheat/protodef-yaml input.yml
+npx protodef-yaml input.yml
 ```
 
 ### Syntax

@@ -19,7 +19,7 @@ function sha1(file) {
 
 const hash = sha1('proto.json')
 console.info('sha1', hash)
-const expected = 'dc910b6e000fbd9a318110f3cc303c16e2d1aaea'
+const expected = 'da1054296f6298df78854c044dd9cef881e608b8'
 if (hash !== expected) {
     console.error('Unexpected hash: ', hash, '!=', expected)
     throw Error('Unexpected hash')
