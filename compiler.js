@@ -201,6 +201,13 @@ function transform(json, outFile) {
                 if (key.startsWith('%')) {
                     const args = key.split(',')
                     if (key.startsWith('%map')) {
+                        let mappings = val
+                        if (Array.isArray(val)) {
+                            mappings = {}
+                            for (let i = 0; i < val.length; i++) {
+                                mappings[i] = val[i]
+                            }
+                        }
                         const [, name, mappingType] = args
                         ctx.push({
                             name,
@@ -208,7 +215,7 @@ function transform(json, outFile) {
                                 'mapper',
                                 {
                                     type: mappingType,
-                                    mappings: val
+                                    mappings
                                 }
                             ]
                         })
@@ -218,6 +225,7 @@ function transform(json, outFile) {
                         let def = []
                         for (var _key in val) {
                             let _val = val[_key]
+                            const _keyName = _key.startsWith('%') ? _key.split(',')[1] : _key
                             if (_key.startsWith('%array')) {
                                 const [, name, type, countType] = _key.split(',')
                                 const tokens = name.replace('if ', '').split(' or ')
@@ -232,18 +240,30 @@ function transform(json, outFile) {
                                         delete as[token]
                                     }
                                 }
-                            } else if (_key.startsWith('if')) {
-                                const tokens = _key.replace('if ', '').split(' or ')
+                            } else if (_keyName.startsWith('if')) {
+                                const tokens = _keyName.replace('if ', '').split(' or ')
                                 for (var token of tokens) {
                                     token = token.trim()
                                     as[token] = typeof _val == 'string' ? _val : ['container', []]
-                                    if (typeof _val == 'object') trans(_val, as[token][1])
+                                    if (typeof _val == 'object') {
+                                        if (_key.startsWith('%switch')) {
+                                            trans({[_key]: _val}, as[token][1])
+                                            as[token] = as[token][1][0].type
+                                        } else {
+                                            trans(_val, as[token][1])
+                                        }    
+                                    }
                                 }
-                            } else if (_key.includes('default')) {
+                            } else if (_keyName.startsWith('default')) {
                                 def = []
                                 if (typeof _val == 'object') {
                                     def = ['container', []]
-                                    trans(_val, def[1])
+                                    if (_key.startsWith('%switch')) {
+                                        trans({[_key]: _val}, def[1])
+                                        def = def[1][0].type
+                                    } else {
+                                        trans(_val, def[1])
+                                    }
                                 }
                             }
                         }

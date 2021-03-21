@@ -17,3 +17,17 @@ ScoreEntries:
                   entity_unique_id: zigzag64
                if fake_player:
                   custom_name: string
+   value: type?
+      if change: bool
+      if remove: type ?
+         if false: u8
+      default: type ?
+         if true: bool
+   enum: u8 =>
+      - a
+      - b
+      - c
+      - d
+      - e
+      - f
+      - g
