@@ -251,7 +251,11 @@ function transform(json, outFile) {
                                             as[token] = as[token][1][0].type
                                         } else {
                                             trans(_val, as[token][1])
-                                        }    
+                                        }
+                                    } else {
+                                        if (_val.startsWith('[')) {
+                                            as[token] = JSON.parse(_val)
+                                        }
                                     }
                                 }
                             } else if (_keyName.startsWith('default')) {
@@ -263,6 +267,11 @@ function transform(json, outFile) {
                                         def = def[1][0].type
                                     } else {
                                         trans(_val, def[1])
+                                    }
+                                } else {
+                                    def = _val
+                                    if (_val.startsWith('[')) {
+                                        def = JSON.parse(_val)
                                     }
                                 }
                             }
