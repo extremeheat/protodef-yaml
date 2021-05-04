@@ -234,7 +234,7 @@ function transform(json, outFile) {
                                     token = token.trim()
                                     as[token] = typeof _val == 'string' ? _val : []
                                     // if (typeof _val == 'object') trans(_val, as[token])
-                                    visitArray(_val, null, countType, undefined, as[token])
+                                    visitArray(_val || type, null, countType, undefined, as[token])
                                     if (token == 'default') {
                                         def = as[token]
                                         delete as[token]
