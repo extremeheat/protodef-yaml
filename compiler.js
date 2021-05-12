@@ -2,7 +2,7 @@ const fs = require('fs')
 const yaml = require('js-yaml')
 
 const getJSON = (file) => JSON.parse(fs.readFileSync(file, 'utf8'))
-const log = () => {}
+const log = () => { }
 
 function detectIndentation(lines) {
     const indentationLevel = 0
@@ -31,7 +31,7 @@ function pad(indentation, line) {
 }
 
 // make valid yaml
-function toYAML(file, followImports = true) {
+function toYAML(file, followImports = true, document = false) {
 
     var imported = []
     function checkIfJson(key, val) { //  ¯\(°_o)/¯
@@ -42,23 +42,43 @@ function toYAML(file, followImports = true) {
         return false
     }
 
-    function validateKey(line, key) {
-    }
+    function validateKey(line, key) { }
 
     let data = fs.readFileSync(file, 'utf8')
     data = data.replace(/\t/g, '    ')
     const lines = data.split('\n')
 
+    let startedDocumenting = false
+
     function pars() {
         let modified = false
         for (var i = 0; i < lines.length; i++) {
             let [key, val] = lines[i].trim().split(':', 2)
-            if (key.startsWith('#')) continue
+            let thisLevel = getIndentation(lines[i])
+            let nextLevel = getIndentation(lines[i + 1] || '')
+            if (key.startsWith('#')) {
+                if ((key.startsWith('# ') || key == '#') && startedDocumenting && document) { // Convert the YAML comments to entries
+                    key = '!comment,' + i
+                    val = lines[i].replace('#', '')
+                    let lastLine = lines[i - 1]
+                    let lastLevel = getIndentation(lines[i - 1] || '')
+                    if (lastLine.trim().startsWith(`'!comment`) && lastLevel == thisLevel) { // Truncate multi-lines
+                        lines[i - 1] += '\n' + pad(thisLevel + 3, val)
+                        lines[i] = ''
+                    } else {
+                        lines[i] = pad(thisLevel, key + ': |\n')
+                        lines[i] += pad(thisLevel + 3, val)
+                    }
+                } else {
+                    continue
+                }
+            }
             key = key.trim(); val = val ? val.trim() : ''
             if (key == '_') key = '__' + i
             if (!key) continue
             if (key.startsWith('!')) {
-
+                if (key.startsWith('!StartDocs')) startedDocumenting = true
+                if (key.startsWith('!EndDocs')) startedDocumenting = false
                 if (key == '!import' && !imported.includes(val) && followImports) {
                     if (modified) {
                         throw Error('Incorrectly placed import, place it ontop of the file')
@@ -70,9 +90,10 @@ function toYAML(file, followImports = true) {
                     return true
                 }
                 let nkey = key.replace('!', "'!")
-                if (key == '!import') nkey += ',' + i
+                if (key == '!import' || key.includes('Docs')) nkey += ',' + i
                 nkey += "'";
                 lines[i] = lines[i].replace(key, nkey)
+                continue
             }
 
             if (checkIfJson(key, val)) {
@@ -83,8 +104,6 @@ function toYAML(file, followImports = true) {
             validateKey(lines[i], key)
 
             log('i', i, val)
-            let thisLevel = getIndentation(lines[i])
-            let nextLevel = getIndentation(lines[i + 1] || '')
             log(thisLevel, nextLevel, nextLevel > thisLevel, val.trim())
             let isParent = nextLevel > thisLevel
             if (isParent) {
@@ -113,6 +132,11 @@ function toYAML(file, followImports = true) {
                 if (val.includes('[]')) {
                     const [type, countType] = val.split('[]')
                     lines[i] = pad(thisLevel, `"%array,${key},${type},${countType}":`)
+                } else if (!isNaN(key.replace(/'/g, ''))) {
+                    // Because JS sorts object stupid, we need to encapsulate numeric type
+                    // keys to ensure proper ordering with '%n,NUMBER'
+                    let num = key.replace(/'/g, '')
+                    lines[i] = pad(thisLevel, `'%n,${parseInt(num)}': ${val}`)
                 }
             }
         }
@@ -128,9 +152,8 @@ function toYAML(file, followImports = true) {
 function parseYAML(lines, outFile = 'inter.json') {
     try {
         yaml.loadAll(lines.join('\n'), function (doc) {
-            log(doc)
             fs.writeFileSync(outFile, JSON.stringify(doc, null, 2))
-        })        
+        })
     } catch (e) {
         if (e instanceof yaml.YAMLException) {
             delete e.mark // remove logging spam
@@ -158,8 +181,9 @@ function transform(json, outFile) {
                 ctx.push('array', { countType, count, type: obj })
             }
         } else {
-            const len = Object.keys(obj).length
-            const first = Object.keys(obj)[0]
+            const k = Object.keys(obj).filter(k => !k.startsWith('!'))
+            const len = k.length
+            const first = k[0]
             // Try to inline switch/array inside an array if only 1 item inside
             // log('F', first, name, Object.keys(obj), first.startsWith('%array'))
             if (len == 1 && (first.startsWith('%array') || first.startsWith('%switch'))) { //remove container nested array
@@ -169,14 +193,14 @@ function transform(json, outFile) {
                     trans(obj, a.type)
                     //   log('atn0-------',name,a.type)
                     if (!a.type[0].name || a.type[0].name.startsWith('__')) a.type = a.type[0].type
-                    else a.type = [ 'container', [a.type[0]] ]
+                    else a.type = ['container', [a.type[0]]]
                 } else {
                     const a = { countType, count, type: [] }
                     ctx.push('array', a)
                     trans(obj, a.type)
                     //   log('atn1',a.type)
                     if (!a.type[0].name || a.type[0].name.startsWith('__')) a.type = a.type[0].type
-                    else a.type = [ 'container', [a.type[0]] ]
+                    else a.type = ['container', [a.type[0]]]
                 }
             } else {
                 if (name) {
@@ -196,17 +220,17 @@ function transform(json, outFile) {
         ctx = ctx || []
         for (var key in obj) {
             let val = obj[key]
+            if (key.startsWith('!')) continue
 
             if (typeof val == 'object') {
                 if (key.startsWith('%')) {
                     const args = key.split(',')
                     if (key.startsWith('%map')) {
-                        let mappings = val
-                        if (Array.isArray(val)) {
-                            mappings = {}
-                            for (let i = 0; i < val.length; i++) {
-                                mappings[i] = val[i]
-                            }
+                        let mappings = {}
+                        for (let i in val) {
+                            if (i.startsWith('!')) continue
+                            let _i = i.startsWith('%') ? i.split(',')[1] : i
+                            mappings[_i] = val[i] // Ignore comments + encapsulated numbers
                         }
                         const [, name, mappingType] = args
                         ctx.push({
@@ -247,7 +271,7 @@ function transform(json, outFile) {
                                     as[token] = typeof _val == 'string' ? _val : ['container', []]
                                     if (typeof _val == 'object') {
                                         if (_key.startsWith('%switch')) {
-                                            trans({[_key]: _val}, as[token][1])
+                                            trans({ [_key]: _val }, as[token][1])
                                             as[token] = as[token][1][0].type
                                         } else {
                                             trans(_val, as[token][1])
@@ -263,7 +287,7 @@ function transform(json, outFile) {
                                 if (typeof _val == 'object') {
                                     def = ['container', []]
                                     if (_key.startsWith('%switch')) {
-                                        trans({[_key]: _val}, def[1])
+                                        trans({ [_key]: _val }, def[1])
                                         def = def[1][0].type
                                     } else {
                                         trans(_val, def[1])
