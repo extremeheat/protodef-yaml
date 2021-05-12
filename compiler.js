@@ -448,9 +448,9 @@ function formFinal(inp, out) {
     fs.writeFileSync(out || './compiled_proto.json', JSON.stringify(ret, null, 2))
 }
 
-function getIntermediate(inputFile) {
+function getIntermediate(inputFile, includeComments) {
     const temp = __dirname + '/inter0.json'
-    parseYAML(toYAML(inputFile, false), temp)
+    parseYAML(toYAML(inputFile, false, includeComments), temp)
     return getJSON(temp)
 }
 
