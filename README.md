@@ -1,4 +1,9 @@
 # protodef-yaml
+[![NPM version](https://img.shields.io/npm/v/protodef-yaml.svg)](http://npmjs.com/package/protodef-yaml)
+[![Build Status](https://github.com/extremeheat/protodef-yaml/workflows/CI/badge.svg)](https://github.com/extremeheat/protodef-yaml/actions?query=workflow%3A%22CI%22)
+[![Discord](https://img.shields.io/badge/chat-on%20discord-brightgreen.svg)](https://discord.gg/GsEFRM8)
+[![Try it on gitpod](https://img.shields.io/badge/try-on%20gitpod-brightgreen.svg)](https://gitpod.io/#https://github.com/extremeheat/protodef-yaml)
+
 Transforms YAML-like syntax to ProtoDef JSON schema and HTML documentation.
 
 ### Usage
@@ -12,6 +17,7 @@ protodef-yaml <input yaml file> <output html file> # generate docs
 or through npx,
 ```
 npx protodef-yaml input.yml
+npx protodef-yaml input.yml docs.html
 ```
 
 ### API
