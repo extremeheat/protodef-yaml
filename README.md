@@ -25,7 +25,7 @@ npx protodef-yaml input.yml docs.html
 See [API.md](docs/API.md)
 
 ### Syntax
-TODO, see test/ for example files
+Refer to [this documentation](https://github.com/PrismarineJS/bedrock-protocol/blob/master/CONTRIBUTING.md#packet-serialization), also see test/ for example files
 
 Example input:
 
@@ -187,4 +187,8 @@ You can also embed JSON for custom ProtoDef types as usual, for example:
 string: ["pstring", {"countType": "i32"}]
 ```
 
-*Note:* the parser only supports this at a root level -- nested json inside yaml will not work)
+*Note:* the parser only supports this at a root level. To use nested json inside yaml, you can encapsulate a JSON array with a single quote. For example:
+```yaml
+SomeType:
+   some_string: '["pstring", {"countType": "i32"}]'
+```
