@@ -1,21 +1,31 @@
 # protodef-yaml
-Transforms YAML-like syntax to ProtoDef JSON schema
+[![NPM version](https://img.shields.io/npm/v/protodef-yaml.svg)](http://npmjs.com/package/protodef-yaml)
+[![Build Status](https://github.com/extremeheat/protodef-yaml/workflows/CI/badge.svg)](https://github.com/extremeheat/protodef-yaml/actions?query=workflow%3A%22CI%22)
+[![Discord](https://img.shields.io/badge/chat-on%20discord-brightgreen.svg)](https://discord.gg/GsEFRM8)
+[![Try it on gitpod](https://img.shields.io/badge/try-on%20gitpod-brightgreen.svg)](https://gitpod.io/#https://github.com/extremeheat/protodef-yaml)
 
+Transforms YAML-like syntax to ProtoDef JSON schema and HTML documentation.
 
 ### Usage
 
 ```sh
 npm install -g protodef-yaml
-protodef-yaml <input yaml file> <output json file>
+protodef-yaml <input yaml file> <output json file> # generate json
+protodef-yaml <input yaml file> <output html file> # generate docs
 ```
 
 or through npx,
 ```
 npx protodef-yaml input.yml
+npx protodef-yaml input.yml docs.html
 ```
 
+### API
+
+See [API.md](docs/API.md)
+
 ### Syntax
-TODO, see test/ for example files
+Refer to [this documentation](https://github.com/PrismarineJS/bedrock-protocol/blob/master/CONTRIBUTING.md#packet-serialization), also see test/ for example files
 
 Example input:
 
@@ -177,4 +187,8 @@ You can also embed JSON for custom ProtoDef types as usual, for example:
 string: ["pstring", {"countType": "i32"}]
 ```
 
-*Note:* the parser only supports this at a root level -- nested json inside yaml will not work)
+*Note:* the parser only supports this at a root level. To use nested json inside yaml, you can encapsulate a JSON array with a single quote. For example:
+```yaml
+SomeType:
+   some_string: '["pstring", {"countType": "i32"}]'
+```
