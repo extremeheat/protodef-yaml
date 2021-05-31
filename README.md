@@ -1,18 +1,22 @@
 # protodef-yaml
-Transforms YAML-like syntax to ProtoDef JSON schema
-
+Transforms YAML-like syntax to ProtoDef JSON schema and HTML documentation.
 
 ### Usage
 
 ```sh
 npm install -g protodef-yaml
-protodef-yaml <input yaml file> <output json file>
+protodef-yaml <input yaml file> <output json file> # generate json
+protodef-yaml <input yaml file> <output html file> # generate docs
 ```
 
 or through npx,
 ```
 npx protodef-yaml input.yml
 ```
+
+### API
+
+See [API.md](docs/API.md)
 
 ### Syntax
 TODO, see test/ for example files

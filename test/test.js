@@ -1,4 +1,4 @@
-const { compile } = require('../compiler')
+const { compile, genHTML } = require('../index')
 const fs = require('fs')
 const crypto = require('crypto')
 
@@ -11,6 +11,8 @@ for (var file of ['file.yml', 'file2.yml']) {
 console.log('Testing proto.yml')
 
 compile('./proto.yaml', './proto.json')
+
+genHTML.test()
 
 function sha1(file) {
     const data = fs.readFileSync(file);

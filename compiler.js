@@ -1,5 +1,6 @@
 const fs = require('fs')
 const yaml = require('js-yaml')
+const Path = require('path')
 
 const getJSON = (file) => JSON.parse(fs.readFileSync(file, 'utf8'))
 const log = () => { }
@@ -84,7 +85,7 @@ function toYAML(file, followImports = true, document = false) {
                         throw Error('Incorrectly placed import, place it ontop of the file')
                     }
                     imported.push(val)
-                    let imp = fs.readFileSync('./' + val, 'utf-8')
+                    let imp = fs.readFileSync(Path.dirname(file) + '/' + val, 'utf-8')
                     imp = imp.replace(/\t/g, '    ')
                     lines.splice(i, 0, ...imp.split('\n'))
                     return true
@@ -166,7 +167,7 @@ function transform(json, outFile) {
     json = json || require('./inter.json')
 
     // console.log(json)
-    ctx = []
+    var ctx = []
 
     function visitArray(obj, name, countType, count, ctx) {
         log('OBJ', obj)

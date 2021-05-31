@@ -1,13 +1,22 @@
 #!/usr/bin/env node
-const { compile } = require('./compiler')
+const { compile, parse } = require('./compiler')
+const htmlGen = require('./generators/html')
+const fs = require('fs')
 
 if (!process.argv[2]) {
-    console.warn('usage: protoyaml <inputYAML> [outputJSON]')
-    console.warn('example: protoyaml proto.yaml protocol.json')
+    console.warn('usage: protodef-yaml <inputYAML> [output.json | output.html]')
+    console.warn('example: protodef-yaml proto.yaml protocol.json')
+    console.warn('example: protodef-yaml proto.yaml protocol.html')
 } else {
     const inp = process.argv[2]
     const out = process.argv[3] || (inp.split('.', -1)[0] + '.json')
 
-    compile(inp, out)
+    if (out.endsWith('.html')) {
+        const intermediary = parse(inp, true)
+        const html = htmlGen(intermediary, { includeHeader: true })
+        fs.writeFileSync(out, html)
+    } else {
+        compile(inp, out)
+    }
     console.info('✔ ', out)
 }
