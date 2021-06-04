@@ -18,7 +18,7 @@ Turn the YAML into HTML documentation:
 const fs = require('fs')
 const { parse, genHTML } = require('protodef-yaml')
 const inter = parse(inputFile = 'proto.yaml', includeComments = true)
-const html = genHTML(inputFile = 'proto.yaml', { includeHeader: true })
+const html = genHTML(inter, { includeHeader: true })
 fs.writeFileSync('proto.html', html)
 ```
 
