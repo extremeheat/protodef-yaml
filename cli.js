@@ -12,7 +12,7 @@ if (!process.argv[2]) {
     const out = process.argv[3] || (inp.split('.', -1)[0] + '.json')
 
     if (out.endsWith('.html')) {
-        const intermediary = parse(inp, true)
+        const intermediary = parse(inp, true, true)
         const html = htmlGen(intermediary, { includeHeader: true })
         fs.writeFileSync(out, html)
     } else {
