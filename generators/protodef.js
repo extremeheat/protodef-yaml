@@ -59,7 +59,7 @@ function toYAML(input, followImports = true, document = false) {
 					val = lines[i].replace('#', '')
 					const lastLine = lines[i - 1]
 					const lastLevel = getIndentation(lines[i - 1] || '')
-					if (lastLine.trim().startsWith('\'!comment') && lastLevel == thisLevel) { // Truncate multi-lines
+					if (lastLine.trim().startsWith('\'!comment') && lastLevel == thisLevel && false) { // Truncate multi-lines
 						lines[i - 1] += '\n' + pad(thisLevel + 3, val)
 						lines[i] = ''
 					} else {

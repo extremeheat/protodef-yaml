@@ -43,7 +43,7 @@ function generate(toTransform, options = {}) {
             if (typeof val === 'object') {
                 if (key.startsWith('%switch')) {
                     const [_, what, condition] = key.split(',')
-                    rows += pad(`<tr><td><b class='name'>${what.startsWith('_') ? '🔁' : tfName(what)}</b><br/><br/> <i><div class='tag tag-switch'>if <span class='name'>${tfName(condition)}</span></div></i></td><td colspan=2><table>`)
+                    rows += pad(`<tr><td><b class='name'>${what.startsWith('_') ? '&#128257;' : tfName(what)}</b><br/><br/> <i><div class='tag tag-switch'>if <span class='name'>${tfName(condition)}</span></div></i></td><td colspan=2><table>`)
                     for (let k in val) {
                         let condition = k.startsWith('%') ? k.split(',')[1] : k
                         // rows += pad(`<tr><td>${condition}</td><td><table>`)
@@ -117,7 +117,7 @@ function generate(toTransform, options = {}) {
             const [type, name] = k.split(',')
             if (!name) return ''
             listOfTypes.push(name)
-            return name.startsWith('packet_') ? `<tr><td><a href="#${name}">0x${v['!id'].toString(16)}</a></td><td><a href="#${name}">${name}</a></td></tr>` : `<tr><td><a href="#${name}">Type</a><td class='name'>${tfType(name)}</td></tr>`
+            return (name.startsWith('packet_') && v?.['!id']) ? `<tr><td><a href="#${name}">0x${v['!id'].toString(16)}</a></td><td><a href="#${name}">${name}</a></td></tr>` : `<tr><td><a href="#${name}">Type</a><td class='name'>${tfType(name)}</td></tr>`
         }).join('\n')}
   </tbody>
   </table><br/><hr/>`
