@@ -378,7 +378,7 @@ function formFinal(inp, out) {
 	return ret
 }
 
-function getIntermediate(input, includeComments, followImports) {
+function getIntermediate(input, includeComments, followImports = false) {
 	return parseYAML(toYAML(input, followImports, includeComments))
 }
 
