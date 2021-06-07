@@ -1,3 +1,6 @@
+<<<<<<< HEAD
+module.exports = require('./generators/protodef')
+=======
 const fs = require('fs')
 const yaml = require('js-yaml')
 const Path = require('path')
@@ -471,3 +474,4 @@ module.exports = { compile, parse: getIntermediate }
 //     transform()
 //     formFinal()
 // }
+>>>>>>> master

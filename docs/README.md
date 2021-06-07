@@ -4,7 +4,7 @@
 [![Discord](https://img.shields.io/badge/chat-on%20discord-brightgreen.svg)](https://discord.gg/GsEFRM8)
 [![Try it on gitpod](https://img.shields.io/badge/try-on%20gitpod-brightgreen.svg)](https://gitpod.io/#https://github.com/extremeheat/protodef-yaml)
 
-Transforms YAML-like syntax to ProtoDef JSON schema and HTML documentation.
+Transforms YAML-like syntax to ProtoDef JSON schema and HTML documentation. [See a live demo!](https://extremeheat.github.io/protodef-yaml/editor/)
 
 ### Usage
 
