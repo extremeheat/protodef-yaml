@@ -229,7 +229,7 @@ a { text-decoration: none; }
 
 function test() {
     const fs = require('fs')
-    const file = '../test/proto.yaml'
+    const file = '../test/files/proto.yaml'
     const { parse } = require('../compiler')
     const intermediary = parse(file, true)
     // console.log('i', intermediary)
@@ -238,4 +238,3 @@ function test() {
 }
 
 module.exports = generate
-module.exports.test = test

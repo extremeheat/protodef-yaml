@@ -5,7 +5,8 @@
   "main": "index.js",
   "bin": "./cli.js",
   "scripts": {
-    "test": "cd test && node test.js"
+    "test": "mocha",
+    "bundle": "browserify ./index.js -o docs/bundle.js"
   },
   "keywords": [
     "protodef"
@@ -15,5 +16,10 @@
   "dependencies": {
     "js-yaml": "^4.0.0",
     "showdown": "^1.9.1"
+  },
+  "devDependencies": {
+    "browserify": "^17.0.0",
+    "browserify-fs": "^1.0.0",
+    "mocha": "^8.4.0"
   }
 }
