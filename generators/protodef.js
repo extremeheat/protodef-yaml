@@ -140,6 +140,9 @@ function toYAML(input, followImports = true, document = false) {
 					// keys to ensure proper ordering with '%n,NUMBER'
 					const num = key.replace(/'/g, '')
 					lines[i] = pad(thisLevel, `'%n,${parseInt(num)}': ${val}`)
+				} else if (val.includes('=>')) {
+					const [sizeType,valueType] = val.split('=>')
+					lines[i] = pad(thisLevel, `"%map,${key},${sizeType.trim()},${valueType.trim()}":`)
 				}
 			}
 		}
@@ -227,12 +230,13 @@ function transform(json) {
 					const args = key.split(',')
 					if (key.startsWith('%map')) {
 						const mappings = {}
+						const [, name, mappingType, valueType] = args
+						val = val || json['%container,' + valueType + ',']
 						for (const i in val) {
 							if (i.startsWith('!')) continue
 							const _i = i.startsWith('%') ? i.split(',')[1] : i
 							mappings[_i] = val[i] // Ignore comments + encapsulated numbers
 						}
-						const [, name, mappingType] = args
 						ctx.push({
 							name,
 							type: [
