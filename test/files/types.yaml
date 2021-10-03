@@ -394,7 +394,7 @@ ItemComponentList: []varint
    name: string
    nbt: nbt
 
-Severity:
+Severity: =>
    0: low
    1: high
    2: highest

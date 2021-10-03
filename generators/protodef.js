@@ -231,7 +231,8 @@ function transform(json) {
 					if (key.startsWith('%map')) {
 						const mappings = {}
 						const [, name, mappingType, valueType] = args
-						val = val || json['%container,' + valueType + ',']
+						if (!mappingType) continue
+						val = val || json['%map,' + valueType + ',']
 						for (const i in val) {
 							if (i.startsWith('!')) continue
 							const _i = i.startsWith('%') ? i.split(',')[1] : i
