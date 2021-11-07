@@ -119,6 +119,17 @@ function toYAML(input, followImports = true, document = false) {
 				} else if (val.includes('=>')) {
 					const type = val.replace('=>', '').trim()
 					lines[i] = pad(thisLevel, `"%map,${key},${type}":`)
+					
+					if (document) { // we need index numbers for the docs
+						let autoIncrementPos = 0
+						for (let j = i + 1; j < lines.length; j++) {
+							if (lines[j].startsWith('- '.padStart(nextLevel + 2))) {
+								lines[j] = lines[j].replace('- ', autoIncrementPos++ + ': ')
+							} else if (!lines[j].trim().startsWith('#')) {
+								break
+							}
+						}
+					}
 				} else if (val.includes('?')) {
 					val = val.replace('?', '').trim()
 					lines[i] = pad(thisLevel, `"%switch,${key},${val}":`)
