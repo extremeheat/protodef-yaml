@@ -25,7 +25,7 @@ it('transforms to ProtoDef', function() {
 
 	const hash = sha1(f`proto.json`)
 	console.info('sha1', hash)
-	assert.strictEqual(hash, 'da1054296f6298df78854c044dd9cef881e608b8')
+	assert.strictEqual(hash, 'ac2f3030e3f89cd283e7b7bbbcea369a32db85fe')
 })
 
 it('works inline', function () {

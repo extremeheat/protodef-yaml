@@ -1410,7 +1410,7 @@ packet_packet_violation_warning:
     !server: false
     !client: true
     violation_type: zigzag32
-    severity: zigzag32
+    severity: zigzag32 => Severity
     packet_id: zigzag32
     reason: string
 

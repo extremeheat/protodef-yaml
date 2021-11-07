@@ -393,3 +393,8 @@ ItemStackResponses: []varint
 ItemComponentList: []varint
    name: string
    nbt: nbt
+
+Severity: =>
+   0: low
+   1: high
+   2: highest
