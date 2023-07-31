@@ -364,6 +364,17 @@ function toYAML(input, followImports = true, document = false) {
 				} else if (val.includes('=>')) {
 					const type = val.replace('=>', '').trim()
 					lines[i] = pad(thisLevel, `"%map,${key},${type}":`)
+					
+					if (document) { // we need index numbers for the docs
+						let autoIncrementPos = 0
+						for (let j = i + 1; j < lines.length; j++) {
+							if (lines[j].startsWith('- '.padStart(nextLevel + 2))) {
+								lines[j] = lines[j].replace('- ', autoIncrementPos++ + ': ')
+							} else if (!lines[j].trim().startsWith('#')) {
+								break
+							}
+						}
+					}
 				} else if (val.includes('?')) {
 					val = val.replace('?', '').trim()
 					lines[i] = pad(thisLevel, `"%switch,${key},${val}":`)
@@ -385,6 +396,9 @@ function toYAML(input, followImports = true, document = false) {
 					// keys to ensure proper ordering with '%n,NUMBER'
 					const num = key.replace(/'/g, '')
 					lines[i] = pad(thisLevel, `'%n,${parseInt(num)}': ${val}`)
+				} else if (val.includes('=>')) {
+					const [sizeType,valueType] = val.split('=>')
+					lines[i] = pad(thisLevel, `"%map,${key},${sizeType.trim()},${valueType.trim()}":`)
 				}
 			}
 		}
@@ -472,12 +486,14 @@ function transform(json) {
 					const args = key.split(',')
 					if (key.startsWith('%map')) {
 						const mappings = {}
+						const [, name, mappingType, valueType] = args
+						if (!mappingType) continue
+						val = val || json['%map,' + valueType + ',']
 						for (const i in val) {
 							if (i.startsWith('!')) continue
 							const _i = i.startsWith('%') ? i.split(',')[1] : i
 							mappings[_i] = val[i] // Ignore comments + encapsulated numbers
 						}
-						const [, name, mappingType] = args
 						ctx.push({
 							name,
 							type: [
