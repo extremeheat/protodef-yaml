@@ -38,6 +38,7 @@ ScoreEntries:
       scoreboard_id: zigzag64
       objective_name: string
       score: li32
+      optional?: bool
       _: type?
          if remove:
             entry_type: i8 =>
@@ -93,6 +94,13 @@ ScoreEntries:
                 {
                   "name": "score",
                   "type": "li32"
+                },
+                {
+                  "name": "optional",
+                  "type": [
+                    "option",
+                    "bool"
+                  ]
                 },
                 {
                   "anon": true,

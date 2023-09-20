@@ -28,6 +28,13 @@ it('transforms to ProtoDef', function() {
 	assert.strictEqual(hash, 'ac2f3030e3f89cd283e7b7bbbcea369a32db85fe')
 })
 
+it('transforms optionals to ProtoDef', function() {
+	compile(f`opts.yml`, f`opts.json`)
+	const hash = sha1(f`opts.json`)
+	console.info('sha1 of optionals', hash)
+	assert.strictEqual(hash, '3c24211c3b0ed22371104a0485277e607dc7b58b')
+})
+
 it('works inline', function () {
 	const json = compile({
 		'main': 'x: bool\n!import: import.yml',

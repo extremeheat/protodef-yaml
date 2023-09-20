@@ -232,6 +232,16 @@ function transform(json) {
 
 	function trans(obj, ctx) {
 		ctx = ctx || []
+
+		function ctxPush (data) {
+			if (data.name && data.name.endsWith('?')) {
+				data.name = 
+				ctx.push({ ...data, name: data.name.slice(0, -1), type: ["option", data.type] })
+			} else {
+				ctx.push(data)
+			}
+		}
+
 		for (const key in obj) {
 			let val = obj[key]
 			if (key.startsWith('!')) continue
@@ -249,7 +259,7 @@ function transform(json) {
 							const _i = i.startsWith('%') ? i.split(',')[1] : i
 							mappings[_i] = val[i] // Ignore comments + encapsulated numbers
 						}
-						ctx.push({
+						ctxPush({
 							name,
 							type: [
 								'mapper',
@@ -319,7 +329,7 @@ function transform(json) {
 						let anon
 						if (name.startsWith('__')) { name = undefined; anon = true }
 
-						ctx.push({
+						ctxPush({
 							name,
 							anon,
 							type: [
@@ -344,8 +354,9 @@ function transform(json) {
 						const name = cname.startsWith('__') ? undefined : cname
 						let anon
 						if (!name) anon = true
-						ctx.push({ name, anon, type: ['container', []] })
-						trans(val, ctx[ctx.length - 1].type[1])
+						const o = { name, anon, type: ['container', []] }
+						trans(val, o.type[1])
+						ctxPush(o)
 					}
 				} else {
 					// log(ctx)
@@ -356,7 +367,7 @@ function transform(json) {
 				if (val.startsWith('[')) {
 					val = JSON.parse(val)
 				}
-				ctx.push({ name: key, type: val })
+				ctxPush({ name: key, type: val })
 			}
 			log(key, typeof val)
 		}
