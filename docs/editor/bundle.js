@@ -28,7 +28,7 @@ function generate(toTransform, options = {}) {
     const isStatement = key => key.startsWith('if ') || key == 'default'
     const tfName = (key, parent) => {
         if (isStatement(key) && (parent?.includes('%switch'))) return `<span class='fake'>${key.replace('if', 'is').replace(/_/g, ' ')}</span>`
-        return key.startsWith('_') ? key : key.replace(/_/g, ' ').replace('$', '')
+        return key.startsWith('_') ? key : key.replace(/_/g, ' ').replace('$', '').replace('?', '')
     }
 
     function work() {
@@ -44,10 +44,14 @@ function generate(toTransform, options = {}) {
             }
             if (Array.isArray(val)) return
 
+            let extraTag = ''
+            const aname = key.startsWith('%') ? key.split(',')[1] : key
+            if (aname.endsWith('?')) extraTag += `<div class='tag tag-optional'>optional</div>`
+
             if (typeof val === 'object') {
                 if (key.startsWith('%switch')) {
                     const [_, what, condition] = key.split(',')
-                    rows += pad(`<tr><td><b class='name'>${what.startsWith('_') ? '&#128257;' : tfName(what)}</b><br/><br/> <i><div class='tag tag-switch'>if <span class='name'>${tfName(condition)}</span></div></i></td><td colspan=2><table>`)
+                    rows += pad(`<tr><td><b class='name'>${what.startsWith('_') ? '&#128257;' : tfName(what)}</b><br/><br/>${extraTag}<i><div class='tag tag-switch'>if <span class='name'>${tfName(condition)}</span></div></i></td><td colspan=2><table>`)
                     for (let k in val) {
                         let condition = k.startsWith('%') ? k.split(',')[1] : k
                         // rows += pad(`<tr><td>${condition}</td><td><table>`)
@@ -58,7 +62,7 @@ function generate(toTransform, options = {}) {
                     rows += pad(`</table></td></tr>`)
                 } else if (key.startsWith('%container') || key.startsWith('if ')) {
                     const name = key.startsWith('%') ? key.split(',')[1] : key
-                    rows += pad(`<tr><td class='name'>${tfName(name, parent)} </td><td colspan=2 class='bordered'><table>`)
+                    rows += pad(`<tr><td class='name'>${tfName(name, parent)} ${extraTag}</td><td colspan=2 class='bordered'><table>`)
                     for (const k in val) {
                         let v = val[k]
                         parseContainer(k, v, depth + 1, key)
@@ -66,7 +70,7 @@ function generate(toTransform, options = {}) {
                     rows += pad(`</table></td></tr>`)
                 } else if (key.startsWith('%map')) {
                     const [_, what, type] = key.split(',')
-                    rows += pad(`<tr><td class='name field-name'>${tfName(what, parent)}</td><td colspan=2>${type} <span class='tag tag-enum'>enum</span><hr/> <table style='width:100%'>`)
+                    rows += pad(`<tr><td class='name field-name'>${tfName(what, parent)} ${extraTag}</td><td colspan=2>${type} <span class='tag tag-enum'>enum</span><hr/> <table style='width:100%'>`)
                     for (const k in val) {
                         let v = val[k]
                         if (k.startsWith('!')) {
@@ -99,7 +103,7 @@ function generate(toTransform, options = {}) {
                 }
                 // rows += pad('</td></tr>')
             } else if (typeof val === 'string') {
-                rows += pad(`<tr><td class='field-name name'>${tfName(key, parent)}</td><td>${tfType(val)}</td><td>${nextComment()}</td></tr>`)
+                rows += pad(`<tr><td class='field-name name'>${tfName(key, parent)} ${extraTag}</td><td>${tfType(val)}</td><td>${nextComment()}</td></tr>`)
             }
         }
 
@@ -215,6 +219,9 @@ body { font-family: Helvetica, Arial, sans-serif; }
 .tag { border-radius: 10px; margin: 4px; padding: 2px 4px 2px 4px; background-color: lightblue; background-color: black; color: white; }
 .tag-switch {
   background-color: #F0F0F0; border: 1px solid #A0A0A0; color: black; padding: 6px;
+}
+.tag-optional {
+  background-color: gold; border: 1px solid #A0A0A0; color: black; padding: 6px;
 }
 .tag-array {
   background-color: navy;
@@ -477,6 +484,16 @@ function transform(json) {
 
 	function trans(obj, ctx) {
 		ctx = ctx || []
+
+		function ctxPush (data) {
+			if (data.name && data.name.endsWith('?')) {
+				data.name = 
+				ctx.push({ ...data, name: data.name.slice(0, -1), type: ["option", data.type] })
+			} else {
+				ctx.push(data)
+			}
+		}
+
 		for (const key in obj) {
 			let val = obj[key]
 			if (key.startsWith('!')) continue
@@ -494,7 +511,7 @@ function transform(json) {
 							const _i = i.startsWith('%') ? i.split(',')[1] : i
 							mappings[_i] = val[i] // Ignore comments + encapsulated numbers
 						}
-						ctx.push({
+						ctxPush({
 							name,
 							type: [
 								'mapper',
@@ -564,7 +581,7 @@ function transform(json) {
 						let anon
 						if (name.startsWith('__')) { name = undefined; anon = true }
 
-						ctx.push({
+						ctxPush({
 							name,
 							anon,
 							type: [
@@ -589,8 +606,9 @@ function transform(json) {
 						const name = cname.startsWith('__') ? undefined : cname
 						let anon
 						if (!name) anon = true
-						ctx.push({ name, anon, type: ['container', []] })
-						trans(val, ctx[ctx.length - 1].type[1])
+						const o = { name, anon, type: ['container', []] }
+						trans(val, o.type[1])
+						ctxPush(o)
 					}
 				} else {
 					// log(ctx)
@@ -601,7 +619,7 @@ function transform(json) {
 				if (val.startsWith('[')) {
 					val = JSON.parse(val)
 				}
-				ctx.push({ name: key, type: val })
+				ctxPush({ name: key, type: val })
 			}
 			log(key, typeof val)
 		}
