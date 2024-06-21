@@ -4,12 +4,13 @@ module.exports = require('./generators/protodef')
 },{"./generators/protodef":3}],2:[function(require,module,exports){
 const showdown = require('showdown')
 
+
 /**
  * 
  * @param {object} toTransform Intermediary YAML turned to JSON
  * @param {{ toTitleCase, includeHeader }} options Generation options 
  */
-function generate(toTransform, options = {}) {
+function generate(parsedSchema, options = {}) {
     let rows = options.includeHeader ? defaultHeader : ''
     const converter = new showdown.Converter()
     const md = text => converter.makeHtml(text)
@@ -31,7 +32,7 @@ function generate(toTransform, options = {}) {
         return key.startsWith('_') ? key : key.replace(/_/g, ' ').replace('$', '').replace('?', '')
     }
 
-    function work() {
+    function work(toTransform, idPrefix = '') {
         let lastComment = ''
         const nextComment = () => { const c = lastComment; lastComment = null; return md(c?.replace(/\n\n/g, '<br/>\n') || ''); }
 
@@ -113,7 +114,7 @@ function generate(toTransform, options = {}) {
 
         let listOfTypes = []
         const tfType = type => {
-            return listOfTypes.includes(type) ? `<a href="#${type}">${type}</a>` : type
+            return listOfTypes.includes(type) ? `<a href="#${idPrefix}${type}">${type}</a>` : type
         }
 
         rows += `<h3>Table of Contents</h3>
@@ -125,7 +126,7 @@ function generate(toTransform, options = {}) {
             const [type, name] = k.split(',')
             if (!name) return ''
             listOfTypes.push(name)
-            return (name.startsWith('packet_') && v?.['!id']) ? `<tr><td><a href="#${name}">0x${v['!id'].toString(16)}</a></td><td><a href="#${name}">${name}</a></td></tr>` : `<tr><td><a href="#${name}">Type</a><td class='name'>${tfType(name)}</td></tr>`
+            return (name.startsWith('packet_') && v?.['!id']) ? `<tr><td><a href="#${idPrefix}${name}">0x${v['!id'].toString(16)}</a></td><td><a href="#${idPrefix}${name}">${name}</a></td></tr>` : `<tr><td><a href="#${idPrefix}${name}">Type</a><td class='name'>${tfType(name)}</td></tr>`
         }).join('\n')}
   </tbody>
   </table><br/><hr/>`
@@ -152,8 +153,8 @@ function generate(toTransform, options = {}) {
             const type = { server: 'Serverbound', client: 'Clientbound', both: 'Bidirectional', datatype: 'Datatype' }[bound]
 
             rows += `
-    <div class="packet-header" id="${name}">
-    <a href="#${name}"><div class='packet-id ${bound}'>${packetId}</div><div class='packet-name name'>${tfName(name)}</div></a>
+    <div class="packet-header" id="${idPrefix}${name}">
+    <a href="#${idPrefix}${name}"><div class='packet-id ${bound}'>${packetId}</div><div class='packet-name name'>${tfName(name)}</div></a>
       <small style='vertical-align:middle;float:right'>${type}</small>
     </div><br/>
     \n<p>${nextComment()}</p>\n<table class='table-bordered'>${thead}\n`
@@ -173,7 +174,22 @@ function generate(toTransform, options = {}) {
         return rows
     }
 
-    return work()
+    if (options.schemaSegmented) {
+        console.log('Segmented!')
+        for (const k in parsedSchema) {
+            const value = parsedSchema[k]
+            // protodef-yaml treats "segmented" schemas as standard containers! we unwrap.
+            const key = k.split(',')[1]
+            if (key.startsWith('^')) {
+                rows += `\n<div class="sticky-container"><div class='container sticky-header'>` + key.slice(1).split('.').join(' / ') + '</div>\n'
+                work(value, key.slice(1) + '.')
+                rows += '</div>'
+            }
+        }
+        return rows
+    } else {
+        return work(parsedSchema)
+    }
 }
 
 const defaultHeader = `
@@ -235,6 +251,8 @@ table table {
 thead td { font-weight: bold; background-color: #E0E0E0; }
 a { text-decoration: none; }
 .name { text-transform: capitalize; }
+.sitkcy-container { position: relative; }
+.sticky-header { position: sticky; top: 0; text-align: center; font-size: 1.5rem; }
 </style>
 </head>`
 
@@ -282,7 +300,7 @@ function toYAML(input, followImports = true, document = false) {
 	}
 
 	const imported = []
-	
+
 	function checkIfJson(key, val) { //  ¯\(°_o)/¯
 		if (key.includes('"') || val.includes('[[') || val.includes('[{') || val.includes('{') || val.includes('}')) return true
 		if (!val.includes('[]') && val.includes('[')) return true
@@ -292,7 +310,7 @@ function toYAML(input, followImports = true, document = false) {
 	}
 
 	function validateKey(line, key) { }
-	
+
 	let data = files.main
 	data = data.replace(/\t/g, '    ')
 	const lines = data.split('\n')
@@ -302,7 +320,8 @@ function toYAML(input, followImports = true, document = false) {
 	function pars() {
 		let modified = false
 		for (let i = 0; i < lines.length; i++) {
-			let [key, val] = lines[i].trim().split(':', 2)
+			const trimedLine = lines[i].trim()
+			let [key, val] = trimedLine.endsWith(':') ? [trimedLine.slice(0, -1), ''] : trimedLine.split(': ', 2)
 			const thisLevel = getIndentation(lines[i])
 			const nextLevel = getIndentation(lines[i + 1] || '')
 			if (key.startsWith('#')) {
@@ -371,7 +390,7 @@ function toYAML(input, followImports = true, document = false) {
 				} else if (val.includes('=>')) {
 					const type = val.replace('=>', '').trim()
 					lines[i] = pad(thisLevel, `"%map,${key},${type}":`)
-					
+
 					if (document) { // we need index numbers for the docs
 						let autoIncrementPos = 0
 						for (let j = i + 1; j < lines.length; j++) {
@@ -404,7 +423,7 @@ function toYAML(input, followImports = true, document = false) {
 					const num = key.replace(/'/g, '')
 					lines[i] = pad(thisLevel, `'%n,${parseInt(num)}': ${val}`)
 				} else if (val.includes('=>')) {
-					const [sizeType,valueType] = val.split('=>')
+					const [sizeType, valueType] = val.split('=>')
 					lines[i] = pad(thisLevel, `"%map,${key},${sizeType.trim()},${valueType.trim()}":`)
 				}
 			}
@@ -485,10 +504,10 @@ function transform(json) {
 	function trans(obj, ctx) {
 		ctx = ctx || []
 
-		function ctxPush (data) {
+		function ctxPush(data) {
 			if (data.name && data.name.endsWith('?')) {
-				data.name = 
-				ctx.push({ ...data, name: data.name.slice(0, -1), type: ["option", data.type] })
+				data.name =
+					ctx.push({ ...data, name: data.name.slice(0, -1), type: ["option", data.type] })
 			} else {
 				ctx.push(data)
 			}
@@ -498,7 +517,9 @@ function transform(json) {
 			let val = obj[key]
 			if (key.startsWith('!')) continue
 
-			if (typeof val === 'object') {
+			if (Array.isArray(val) && !key.startsWith('%')) {
+				ctxPush({ name: key, type: val }) // pass thru protodef json
+			} else if (typeof val === 'object') {
 				if (key.startsWith('%')) {
 					const args = key.split(',')
 					if (key.startsWith('%map')) {
@@ -657,13 +678,35 @@ function formFinal(inp, out) {
 	return ret
 }
 
+function applyStructuringTf(obj) {
+	const json = structuredClone(obj)
+	for (const key in json) {
+		const val = json[key]
+		if (key.startsWith('^')) {
+			const slices = key.slice(1).split('.')
+			let node = json
+			let lastSlice
+			let lastNode
+			for (const slice of slices) {
+				node[slice] = node[slice] || {}
+				lastNode = node
+				lastSlice = slice
+				node = node[slice]
+			}
+			lastNode[lastSlice] = val
+			delete json[key]
+		}
+	}
+	return json
+}
+
 function getIntermediate(input, includeComments, followImports = false) {
 	return parseYAML(toYAML(input, followImports, includeComments))
 }
 
-function compile(input, output) {
-	const ret = formFinal(transform(parseYAML(toYAML(input))))
-
+function compile(input, output, applyStructuringTransform = true) {
+	let ret = formFinal(transform(parseYAML(toYAML(input))))
+	if (applyStructuringTransform) ret = applyStructuringTf(ret)
 	if (typeof output === 'string') fs.writeFileSync(output, JSON.stringify(ret, null, 2))
 	return ret
 }

@@ -1,11 +1,12 @@
 const showdown = require('showdown')
 
+
 /**
  * 
  * @param {object} toTransform Intermediary YAML turned to JSON
  * @param {{ toTitleCase, includeHeader }} options Generation options 
  */
-function generate(toTransform, options = {}) {
+function generate(parsedSchema, options = {}) {
     let rows = options.includeHeader ? defaultHeader : ''
     const converter = new showdown.Converter()
     const md = text => converter.makeHtml(text)
@@ -27,7 +28,7 @@ function generate(toTransform, options = {}) {
         return key.startsWith('_') ? key : key.replace(/_/g, ' ').replace('$', '').replace('?', '')
     }
 
-    function work() {
+    function work(toTransform, idPrefix = '') {
         let lastComment = ''
         const nextComment = () => { const c = lastComment; lastComment = null; return md(c?.replace(/\n\n/g, '<br/>\n') || ''); }
 
@@ -109,7 +110,7 @@ function generate(toTransform, options = {}) {
 
         let listOfTypes = []
         const tfType = type => {
-            return listOfTypes.includes(type) ? `<a href="#${type}">${type}</a>` : type
+            return listOfTypes.includes(type) ? `<a href="#${idPrefix}${type}">${type}</a>` : type
         }
 
         rows += `<h3>Table of Contents</h3>
@@ -121,7 +122,7 @@ function generate(toTransform, options = {}) {
             const [type, name] = k.split(',')
             if (!name) return ''
             listOfTypes.push(name)
-            return (name.startsWith('packet_') && v?.['!id']) ? `<tr><td><a href="#${name}">0x${v['!id'].toString(16)}</a></td><td><a href="#${name}">${name}</a></td></tr>` : `<tr><td><a href="#${name}">Type</a><td class='name'>${tfType(name)}</td></tr>`
+            return (name.startsWith('packet_') && v?.['!id']) ? `<tr><td><a href="#${idPrefix}${name}">0x${v['!id'].toString(16)}</a></td><td><a href="#${idPrefix}${name}">${name}</a></td></tr>` : `<tr><td><a href="#${idPrefix}${name}">Type</a><td class='name'>${tfType(name)}</td></tr>`
         }).join('\n')}
   </tbody>
   </table><br/><hr/>`
@@ -148,8 +149,8 @@ function generate(toTransform, options = {}) {
             const type = { server: 'Serverbound', client: 'Clientbound', both: 'Bidirectional', datatype: 'Datatype' }[bound]
 
             rows += `
-    <div class="packet-header" id="${name}">
-    <a href="#${name}"><div class='packet-id ${bound}'>${packetId}</div><div class='packet-name name'>${tfName(name)}</div></a>
+    <div class="packet-header" id="${idPrefix}${name}">
+    <a href="#${idPrefix}${name}"><div class='packet-id ${bound}'>${packetId}</div><div class='packet-name name'>${tfName(name)}</div></a>
       <small style='vertical-align:middle;float:right'>${type}</small>
     </div><br/>
     \n<p>${nextComment()}</p>\n<table class='table-bordered'>${thead}\n`
@@ -169,7 +170,21 @@ function generate(toTransform, options = {}) {
         return rows
     }
 
-    return work()
+    if (options.schemaSegmented) {
+        for (const k in parsedSchema) {
+            const value = parsedSchema[k]
+            // protodef-yaml treats "segmented" schemas as standard containers! we unwrap.
+            const key = k.split(',')[1]
+            if (key.startsWith('^')) {
+                rows += `\n<div class="sticky-container"><div class='container sticky-header'>` + key.slice(1).split('.').join(' / ') + '</div>\n'
+                work(value, key.slice(1) + '.')
+                rows += '</div>'
+            }
+        }
+        return rows
+    } else {
+        return work(parsedSchema)
+    }
 }
 
 const defaultHeader = `
@@ -231,6 +246,8 @@ table table {
 thead td { font-weight: bold; background-color: #E0E0E0; }
 a { text-decoration: none; }
 .name { text-transform: capitalize; }
+.sitkcy-container { position: relative; }
+.sticky-header { position: sticky; top: 0; text-align: center; font-size: 1.5rem; }
 </style>
 </head>`
 

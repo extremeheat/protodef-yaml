@@ -25,7 +25,7 @@ it('transforms to ProtoDef', function() {
 
 	const hash = sha1(f`proto.json`)
 	console.info('sha1', hash)
-	assert.strictEqual(hash, 'ac2f3030e3f89cd283e7b7bbbcea369a32db85fe')
+	assert.strictEqual(hash, '2cd08c609e734c8a914a46ec29540daf74907746')
 })
 
 it('transforms optionals to ProtoDef', function() {
@@ -33,6 +33,20 @@ it('transforms optionals to ProtoDef', function() {
 	const hash = sha1(f`opts.json`)
 	console.info('sha1 of optionals', hash)
 	assert.strictEqual(hash, '3c24211c3b0ed22371104a0485277e607dc7b58b')
+})
+
+it('transforms mcpc with structuring carets to json', function() {
+	compile(f`mcpc.yml`, f`mcpc.json`)
+	const hash = sha1(f`mcpc.json`)
+	console.info('sha1 of mcpc', hash)
+	assert.strictEqual(hash, 'a93a5140ac89008b2eebbb9b4bbd73b7b065fbb4')
+})
+
+it('transforms mcpc with structuring carets to html', function() {
+    const intermediary = parse(f`mcpc.yml`, true)
+    const html = genHTML(intermediary, { includeHeader: true, schemaSegmented: true })
+	 fs.writeFileSync(f`mcpc.html`, html)
+	assert(fs.readFileSync(f`mcpc.html`))
 })
 
 it('works inline', function () {

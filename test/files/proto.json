@@ -1,4 +1,29 @@
 {
+  "bytearray": [
+    "buffer",
+    {
+      "countType": "varint",
+      "type": "i8"
+    }
+  ],
+  "string": [
+    "pstring",
+    {
+      "countType": "varint"
+    }
+  ],
+  "ByteArray": [
+    "buffer",
+    {
+      "countType": "varint"
+    }
+  ],
+  "LittleString": [
+    "pstring",
+    {
+      "countType": "li32"
+    }
+  ],
   "varint32": "varint",
   "varint64": "varint",
   "bool": "native",
@@ -4331,30 +4356,5 @@
         "type": "bool"
       }
     ]
-  ],
-  "bytearray": [
-    "buffer",
-    {
-      "countType": "varint",
-      "type": "i8"
-    }
-  ],
-  "string": [
-    "pstring",
-    {
-      "countType": "varint"
-    }
-  ],
-  "ByteArray": [
-    "buffer",
-    {
-      "countType": "varint"
-    }
-  ],
-  "LittleString": [
-    "pstring",
-    {
-      "countType": "li32"
-    }
   ]
 }
