@@ -247,8 +247,9 @@ function transform(json) {
 			let val = obj[key]
 			if (key.startsWith('!')) continue
 
-			if (Array.isArray(val) && !key.startsWith('%')) {
-				ctxPush({ name: key, type: val }) // pass thru protodef json
+			if (Array.isArray(val) && !key.startsWith('%')) { // pass thru protodef json
+				if (key === '_') ctxPush({ anon: true, type: val })
+				else ctxPush({ name: key, type: val })
 			} else if (typeof val === 'object') {
 				if (key.startsWith('%')) {
 					const args = key.split(',')
@@ -297,9 +298,13 @@ function transform(json) {
 								const tokens = _keyName.replace('if ', '').split(' or ')
 								for (var token of tokens) {
 									token = token.trim()
+									if (Array.isArray(_val) && !_key.startsWith('%')) {
+										as[token] = _val // inline ProtoDef JSON ; no parsing needed
+										continue
+									}
 									as[token] = typeof _val === 'string' ? _val : ['container', []]
 									if (typeof _val === 'object') {
-										if (_key.startsWith('%switch')) {
+										if (_key.startsWith('%switch') || _key.startsWith('%map')) {
 											trans({ [_key]: _val }, as[token][1])
 											as[token] = as[token][1][0].type
 										} else {
@@ -313,9 +318,11 @@ function transform(json) {
 								}
 							} else if (_keyName.startsWith('default')) {
 								def = []
-								if (typeof _val === 'object') {
+								if (Array.isArray(_val) && !_key.startsWith('%')) {
+									as[token] = _val // inline ProtoDef JSON ; no parsing needed
+								} else if (typeof _val === 'object') {
 									def = ['container', []]
-									if (_key.startsWith('%switch')) {
+									if (_key.startsWith('%switch') || _key.startsWith('%map')) {
 										trans({ [_key]: _val }, def[1])
 										def = def[1][0].type
 									} else {
@@ -408,11 +415,13 @@ function formFinal(inp, out) {
 	return ret
 }
 
-function applyStructuringTf(obj) {
+function applyStructuringTf(obj, decontainerize = true) {
+	// move ^path.to.final -> {path:{to:{final}}} and decontainerize
 	const json = structuredClone(obj)
 	for (const key in json) {
 		const val = json[key]
 		if (key.startsWith('^')) {
+			const decontainerized = decontainerize ? Object.fromEntries(Object.values(val[1]).map((e) => [e.name, e.type])) : val
 			const slices = key.slice(1).split('.')
 			let node = json
 			let lastSlice
@@ -423,7 +432,7 @@ function applyStructuringTf(obj) {
 				lastSlice = slice
 				node = node[slice]
 			}
-			lastNode[lastSlice] = val
+			lastNode[lastSlice] = decontainerized
 			delete json[key]
 		}
 	}

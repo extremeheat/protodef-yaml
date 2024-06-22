@@ -617,6 +617,7 @@
       if ping: packet_ping
 ^status.toServer.types:
   packet_ping_start:  
+    # Empty
   packet_ping:  
     time: i64
   packet:  
@@ -690,6 +691,7 @@
     messageId: varint
     data?: restBuffer
   packet_login_acknowledged:  
+    # Empty
   packet:  
     name: varint =>
       0x00: login_start
@@ -708,6 +710,7 @@
   packet_disconnect:  
     reason: anonymousNbt
   packet_finish_configuration:  
+    # Empty
   packet_keep_alive:  
     keepAliveId: i64
   packet_ping:  
@@ -765,6 +768,7 @@
     channel: string
     data: restBuffer
   packet_finish_configuration:  
+    # Empty
   packet_keep_alive:  
     keepAliveId: i64
   packet_pong:  
@@ -905,6 +909,7 @@
   packet_chunk_batch_finished:  
     batchSize: varint
   packet_chunk_batch_start:  
+    # Empty
   packet_tab_complete:  
     transactionId: varint
     start: varint
@@ -1196,6 +1201,7 @@
   packet_end_combat_event:  
     duration: varint
   packet_enter_combat_event:  
+    # Empty
   packet_death_combat_event:  
     playerId: varint
     message: anonymousNbt
@@ -1867,6 +1873,7 @@
     entityId: varint
     yaw: f32
   packet_start_configuration:  
+    # Empty
   packet_set_ticking_state:  
     tick_rate: f32
     is_frozen: bool
@@ -2367,6 +2374,7 @@
   packet_chunk_batch_received:  
     chunksPerTick: f32
   packet_configuration_acknowledged:  
+    # Empty
   packet_ping_request:  
     id: i64
   packet_set_slot_state:  
