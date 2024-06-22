@@ -41,6 +41,7 @@ function toYAML(input, followImports = true, document = false) {
 
 	function validateKey(line, key) { }
 
+	if (!files.main) throw new Error('A `main` file is required. Files given: ' + Object.keys(files).join(', '))
 	let data = files.main
 	data = data.replace(/\t/g, '    ')
 	const lines = data.split('\n')
@@ -227,6 +228,13 @@ function transform(json) {
 					ctx.push('array', a)
 					trans(obj, a.type[1])
 				}
+			}
+		}
+		if (name && name.endsWith('?')) {
+			const pushed = ctx[ctx.length - 1]
+			if (pushed.type) {
+				pushed.name = pushed.name.slice(0, -1)
+				pushed.type = ['option', pushed.type]
 			}
 		}
 	}
