@@ -172,6 +172,7 @@ function generate(parsedSchema, options = {}) {
 
     if (options.schemaSegmented) {
         for (const k in parsedSchema) {
+            if (k.startsWith('!')) continue
             const value = parsedSchema[k]
             // protodef-yaml treats "segmented" schemas as standard containers! we unwrap.
             const key = k.split(',')[1]

@@ -13,7 +13,8 @@ if (!process.argv[2]) {
 
     if (out.endsWith('.html')) {
         const intermediary = parse(inp, true, true)
-        const html = htmlGen(intermediary, { includeHeader: true })
+        const schemaSegmented = Object.keys(intermediary).some(key => key.startsWith('^') || key.startsWith('%container,^'))
+        const html = htmlGen(intermediary, { includeHeader: true, schemaSegmented })
         fs.writeFileSync(out, html)
     } else {
         compile(inp, out)
