@@ -1,15 +1,16 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
 module.exports = require('./generators/protodef')
 
-},{"./generators/protodef":3}],2:[function(require,module,exports){
+},{"./generators/protodef":4}],2:[function(require,module,exports){
 const showdown = require('showdown')
+
 
 /**
  * 
  * @param {object} toTransform Intermediary YAML turned to JSON
  * @param {{ toTitleCase, includeHeader }} options Generation options 
  */
-function generate(toTransform, options = {}) {
+function generate(parsedSchema, options = {}) {
     let rows = options.includeHeader ? defaultHeader : ''
     const converter = new showdown.Converter()
     const md = text => converter.makeHtml(text)
@@ -31,7 +32,7 @@ function generate(toTransform, options = {}) {
         return key.startsWith('_') ? key : key.replace(/_/g, ' ').replace('$', '').replace('?', '')
     }
 
-    function work() {
+    function work(toTransform, idPrefix = '') {
         let lastComment = ''
         const nextComment = () => { const c = lastComment; lastComment = null; return md(c?.replace(/\n\n/g, '<br/>\n') || ''); }
 
@@ -113,7 +114,7 @@ function generate(toTransform, options = {}) {
 
         let listOfTypes = []
         const tfType = type => {
-            return listOfTypes.includes(type) ? `<a href="#${type}">${type}</a>` : type
+            return listOfTypes.includes(type) ? `<a href="#${idPrefix}${type}">${type}</a>` : type
         }
 
         rows += `<h3>Table of Contents</h3>
@@ -125,7 +126,7 @@ function generate(toTransform, options = {}) {
             const [type, name] = k.split(',')
             if (!name) return ''
             listOfTypes.push(name)
-            return (name.startsWith('packet_') && v?.['!id']) ? `<tr><td><a href="#${name}">0x${v['!id'].toString(16)}</a></td><td><a href="#${name}">${name}</a></td></tr>` : `<tr><td><a href="#${name}">Type</a><td class='name'>${tfType(name)}</td></tr>`
+            return (name.startsWith('packet_') && v?.['!id']) ? `<tr><td><a href="#${idPrefix}${name}">0x${v['!id'].toString(16)}</a></td><td><a href="#${idPrefix}${name}">${name}</a></td></tr>` : `<tr><td><a href="#${idPrefix}${name}">Type</a><td class='name'>${tfType(name)}</td></tr>`
         }).join('\n')}
   </tbody>
   </table><br/><hr/>`
@@ -152,8 +153,8 @@ function generate(toTransform, options = {}) {
             const type = { server: 'Serverbound', client: 'Clientbound', both: 'Bidirectional', datatype: 'Datatype' }[bound]
 
             rows += `
-    <div class="packet-header" id="${name}">
-    <a href="#${name}"><div class='packet-id ${bound}'>${packetId}</div><div class='packet-name name'>${tfName(name)}</div></a>
+    <div class="packet-header" id="${idPrefix}${name}">
+    <a href="#${idPrefix}${name}"><div class='packet-id ${bound}'>${packetId}</div><div class='packet-name name'>${tfName(name)}</div></a>
       <small style='vertical-align:middle;float:right'>${type}</small>
     </div><br/>
     \n<p>${nextComment()}</p>\n<table class='table-bordered'>${thead}\n`
@@ -173,7 +174,21 @@ function generate(toTransform, options = {}) {
         return rows
     }
 
-    return work()
+    if (options.schemaSegmented) {
+        for (const k in parsedSchema) {
+            const value = parsedSchema[k]
+            // protodef-yaml treats "segmented" schemas as standard containers! we unwrap.
+            const key = k.split(',')[1]
+            if (key.startsWith('^')) {
+                rows += `\n<div class="sticky-container"><div class='container sticky-header'>` + key.slice(1).split('.').join(' / ') + '</div>\n'
+                work(value, key.slice(1) + '.')
+                rows += '</div>'
+            }
+        }
+        return rows
+    } else {
+        return work(parsedSchema)
+    }
 }
 
 const defaultHeader = `
@@ -235,6 +250,8 @@ table table {
 thead td { font-weight: bold; background-color: #E0E0E0; }
 a { text-decoration: none; }
 .name { text-transform: capitalize; }
+.sitkcy-container { position: relative; }
+.sticky-header { position: sticky; top: 0; text-align: center; font-size: 1.5rem; }
 </style>
 </head>`
 
@@ -249,7 +266,88 @@ function test() {
 }
 
 module.exports = generate
-},{"../compiler":1,"fs":5,"showdown":33}],3:[function(require,module,exports){
+},{"../compiler":1,"fs":6,"showdown":34}],3:[function(require,module,exports){
+function toYAML(obj, depth) {
+  let text = ''
+  function convert(json, depth = 0) {
+    let skipNextPadding = false
+    const pad = txt => skipNextPadding ? (skipNextPadding = false, txt) : (' '.repeat(depth * 2) + txt)
+    function processEntry(key, value, anon) {
+      if (value[0] === 'option' && !skipNextPadding) { // skipNextPadding = switch
+        key += `?`
+        value = value[1]
+      }
+      if (typeof value === 'string') {
+        text += pad(`${key}: ${value}\n`)
+      } else if (Array.isArray(value)) {
+        if (anon) {
+          text += pad(`_:`)
+        } else {
+          text += pad(`${key}:`)
+        }
+        if (value[0] === 'container') {
+          text += pad(`\n`)
+          if (value[1].length === 0) {
+            text += pad(`  # Empty\n`) // yaml doesn't support empty containers
+          } else {
+            convert(value[1], depth + 1)
+          }
+        } else if (value[0] === 'switch') {
+          const sw = value[1]
+          if (Object.keys(sw.fields).length === 0) {
+            text += ` ${JSON.stringify(value)}\n` // yaml doesn't support empty switches
+          } else {
+            text += ` ${sw.compareTo} ?\n`
+            for (const fieldName in sw.fields) {
+              text += pad(`  if `)
+              depth += 1
+              skipNextPadding = true
+              processEntry(fieldName, sw.fields[fieldName])
+              depth -= 1
+            }
+          }
+        } else if (value[0] === 'array') {
+          const arr = value[1]
+          const count = arr.count ? '$' + arr.count : arr.countType
+          if (typeof arr.type === 'string') {
+            text += ` ${arr.type}[]${count || ''}\n`
+          } else if (arr.type[0] === 'container') {
+            text += ` []${count || ''}\n`
+            convert(arr.type[1], depth + 1)
+          } else {
+            text += ` []${count || ''}\n`
+            depth += 1
+            processEntry('', arr.type, true)
+            depth -= 1
+          }
+        } else if (value[0] === 'mapper') {
+          const map = value[1]
+          text += ` ${map.type} =>\n`
+          for (const key in map.mappings) {
+            text += pad(`  ${key}: ${map.mappings[key]}\n`)
+          }
+        } else {
+          let json = JSON.stringify(value, null, 2)
+          json = json.replaceAll('\n', '\n' + ' '.repeat(depth * 2))
+          text += ` ${json}\n`
+        }
+      }
+    }
+    if (Array.isArray(json)) {
+      for (const entry of json) {
+        processEntry(entry.name, entry.type, entry.anon)
+      }
+    } else for (let key in json) {
+      const value = json[key]
+      processEntry(key, value)
+    }
+  }
+  convert(obj, depth)
+  return text
+}
+
+module.exports = toYAML
+},{}],4:[function(require,module,exports){
 const fs = globalThis.window ? null : require('fs')
 const Path = globalThis.window ? null : require('path')
 const yaml = require('js-yaml')
@@ -282,7 +380,7 @@ function toYAML(input, followImports = true, document = false) {
 	}
 
 	const imported = []
-	
+
 	function checkIfJson(key, val) { //  ¯\(°_o)/¯
 		if (key.includes('"') || val.includes('[[') || val.includes('[{') || val.includes('{') || val.includes('}')) return true
 		if (!val.includes('[]') && val.includes('[')) return true
@@ -292,7 +390,8 @@ function toYAML(input, followImports = true, document = false) {
 	}
 
 	function validateKey(line, key) { }
-	
+
+	if (!files.main) throw new Error('A `main` file is required. Files given: ' + Object.keys(files).join(', '))
 	let data = files.main
 	data = data.replace(/\t/g, '    ')
 	const lines = data.split('\n')
@@ -302,7 +401,8 @@ function toYAML(input, followImports = true, document = false) {
 	function pars() {
 		let modified = false
 		for (let i = 0; i < lines.length; i++) {
-			let [key, val] = lines[i].trim().split(':', 2)
+			const trimedLine = lines[i].trim()
+			let [key, val] = trimedLine.endsWith(':') ? [trimedLine.slice(0, -1), ''] : trimedLine.split(': ', 2)
 			const thisLevel = getIndentation(lines[i])
 			const nextLevel = getIndentation(lines[i + 1] || '')
 			if (key.startsWith('#')) {
@@ -371,7 +471,7 @@ function toYAML(input, followImports = true, document = false) {
 				} else if (val.includes('=>')) {
 					const type = val.replace('=>', '').trim()
 					lines[i] = pad(thisLevel, `"%map,${key},${type}":`)
-					
+
 					if (document) { // we need index numbers for the docs
 						let autoIncrementPos = 0
 						for (let j = i + 1; j < lines.length; j++) {
@@ -404,7 +504,7 @@ function toYAML(input, followImports = true, document = false) {
 					const num = key.replace(/'/g, '')
 					lines[i] = pad(thisLevel, `'%n,${parseInt(num)}': ${val}`)
 				} else if (val.includes('=>')) {
-					const [sizeType,valueType] = val.split('=>')
+					const [sizeType, valueType] = val.split('=>')
 					lines[i] = pad(thisLevel, `"%map,${key},${sizeType.trim()},${valueType.trim()}":`)
 				}
 			}
@@ -480,15 +580,22 @@ function transform(json) {
 				}
 			}
 		}
+		if (name && name.endsWith('?')) {
+			const pushed = ctx[ctx.length - 1]
+			if (pushed.type) {
+				pushed.name = pushed.name.slice(0, -1)
+				pushed.type = ['option', pushed.type]
+			}
+		}
 	}
 
 	function trans(obj, ctx) {
 		ctx = ctx || []
 
-		function ctxPush (data) {
+		function ctxPush(data) {
 			if (data.name && data.name.endsWith('?')) {
-				data.name = 
-				ctx.push({ ...data, name: data.name.slice(0, -1), type: ["option", data.type] })
+				data.name =
+					ctx.push({ ...data, name: data.name.slice(0, -1), type: ["option", data.type] })
 			} else {
 				ctx.push(data)
 			}
@@ -498,7 +605,10 @@ function transform(json) {
 			let val = obj[key]
 			if (key.startsWith('!')) continue
 
-			if (typeof val === 'object') {
+			if (Array.isArray(val) && !key.startsWith('%')) { // pass thru protodef json
+				if (key === '_') ctxPush({ anon: true, type: val })
+				else ctxPush({ name: key, type: val })
+			} else if (typeof val === 'object') {
 				if (key.startsWith('%')) {
 					const args = key.split(',')
 					if (key.startsWith('%map')) {
@@ -546,9 +656,13 @@ function transform(json) {
 								const tokens = _keyName.replace('if ', '').split(' or ')
 								for (var token of tokens) {
 									token = token.trim()
+									if (Array.isArray(_val) && !_key.startsWith('%')) {
+										as[token] = _val // inline ProtoDef JSON ; no parsing needed
+										continue
+									}
 									as[token] = typeof _val === 'string' ? _val : ['container', []]
 									if (typeof _val === 'object') {
-										if (_key.startsWith('%switch')) {
+										if (_key.startsWith('%switch') || _key.startsWith('%map')) {
 											trans({ [_key]: _val }, as[token][1])
 											as[token] = as[token][1][0].type
 										} else {
@@ -562,9 +676,11 @@ function transform(json) {
 								}
 							} else if (_keyName.startsWith('default')) {
 								def = []
-								if (typeof _val === 'object') {
+								if (Array.isArray(_val) && !_key.startsWith('%')) {
+									as[token] = _val // inline ProtoDef JSON ; no parsing needed
+								} else if (typeof _val === 'object') {
 									def = ['container', []]
-									if (_key.startsWith('%switch')) {
+									if (_key.startsWith('%switch') || _key.startsWith('%map')) {
 										trans({ [_key]: _val }, def[1])
 										def = def[1][0].type
 									} else {
@@ -657,29 +773,54 @@ function formFinal(inp, out) {
 	return ret
 }
 
+function applyStructuringTf(obj, decontainerize = true) {
+	// move ^path.to.final -> {path:{to:{final}}} and decontainerize
+	const json = structuredClone(obj)
+	for (const key in json) {
+		const val = json[key]
+		if (key.startsWith('^')) {
+			const decontainerized = decontainerize ? Object.fromEntries(Object.values(val[1]).map((e) => [e.name, e.type])) : val
+			const slices = key.slice(1).split('.')
+			let node = json
+			let lastSlice
+			let lastNode
+			for (const slice of slices) {
+				node[slice] = node[slice] || {}
+				lastNode = node
+				lastSlice = slice
+				node = node[slice]
+			}
+			lastNode[lastSlice] = decontainerized
+			delete json[key]
+		}
+	}
+	return json
+}
+
 function getIntermediate(input, includeComments, followImports = false) {
 	return parseYAML(toYAML(input, followImports, includeComments))
 }
 
-function compile(input, output) {
-	const ret = formFinal(transform(parseYAML(toYAML(input))))
-
+function compile(input, output, applyStructuringTransform = true) {
+	let ret = formFinal(transform(parseYAML(toYAML(input))))
+	if (applyStructuringTransform) ret = applyStructuringTf(ret)
 	if (typeof output === 'string') fs.writeFileSync(output, JSON.stringify(ret, null, 2))
 	return ret
 }
 
 module.exports = { compile, parse: getIntermediate }
 
-},{"fs":5,"js-yaml":6,"path":31}],4:[function(require,module,exports){
+},{"fs":6,"js-yaml":7,"path":32}],5:[function(require,module,exports){
 const { compile, parse } = require('./compiler')
 const genHTML = require('./generators/html')
+const genYAML = require('./generators/json2yml')
 
-module.exports = { compile, parse, genHTML }
+module.exports = { compile, parse, genHTML, genYAML }
 
 if (typeof window !== 'undefined') window.protoyaml = module.exports
-},{"./compiler":1,"./generators/html":2}],5:[function(require,module,exports){
+},{"./compiler":1,"./generators/html":2,"./generators/json2yml":3}],6:[function(require,module,exports){
 
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 'use strict';
 
 
@@ -728,7 +869,7 @@ module.exports.safeLoad            = renamed('safeLoad', 'load');
 module.exports.safeLoadAll         = renamed('safeLoadAll', 'loadAll');
 module.exports.safeDump            = renamed('safeDump', 'dump');
 
-},{"./lib/dumper":8,"./lib/exception":9,"./lib/loader":10,"./lib/schema":11,"./lib/schema/core":12,"./lib/schema/default":13,"./lib/schema/failsafe":14,"./lib/schema/json":15,"./lib/type":17,"./lib/type/binary":18,"./lib/type/bool":19,"./lib/type/float":20,"./lib/type/int":21,"./lib/type/map":22,"./lib/type/merge":23,"./lib/type/null":24,"./lib/type/omap":25,"./lib/type/pairs":26,"./lib/type/seq":27,"./lib/type/set":28,"./lib/type/str":29,"./lib/type/timestamp":30}],7:[function(require,module,exports){
+},{"./lib/dumper":9,"./lib/exception":10,"./lib/loader":11,"./lib/schema":12,"./lib/schema/core":13,"./lib/schema/default":14,"./lib/schema/failsafe":15,"./lib/schema/json":16,"./lib/type":18,"./lib/type/binary":19,"./lib/type/bool":20,"./lib/type/float":21,"./lib/type/int":22,"./lib/type/map":23,"./lib/type/merge":24,"./lib/type/null":25,"./lib/type/omap":26,"./lib/type/pairs":27,"./lib/type/seq":28,"./lib/type/set":29,"./lib/type/str":30,"./lib/type/timestamp":31}],8:[function(require,module,exports){
 'use strict';
 
 
@@ -789,7 +930,7 @@ module.exports.repeat         = repeat;
 module.exports.isNegativeZero = isNegativeZero;
 module.exports.extend         = extend;
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 'use strict';
 
 /*eslint-disable no-use-before-define*/
@@ -1756,7 +1897,7 @@ function dump(input, options) {
 
 module.exports.dump = dump;
 
-},{"./common":7,"./exception":9,"./schema/default":13}],9:[function(require,module,exports){
+},{"./common":8,"./exception":10,"./schema/default":14}],10:[function(require,module,exports){
 // YAML error class. http://stackoverflow.com/questions/8458984
 //
 'use strict';
@@ -1813,7 +1954,7 @@ YAMLException.prototype.toString = function toString(compact) {
 
 module.exports = YAMLException;
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 'use strict';
 
 /*eslint-disable max-len,no-use-before-define*/
@@ -3542,7 +3683,7 @@ function load(input, options) {
 module.exports.loadAll = loadAll;
 module.exports.load    = load;
 
-},{"./common":7,"./exception":9,"./schema/default":13,"./snippet":16}],11:[function(require,module,exports){
+},{"./common":8,"./exception":10,"./schema/default":14,"./snippet":17}],12:[function(require,module,exports){
 'use strict';
 
 /*eslint-disable max-len*/
@@ -3665,7 +3806,7 @@ Schema.prototype.extend = function extend(definition) {
 
 module.exports = Schema;
 
-},{"./exception":9,"./type":17}],12:[function(require,module,exports){
+},{"./exception":10,"./type":18}],13:[function(require,module,exports){
 // Standard YAML's Core schema.
 // http://www.yaml.org/spec/1.2/spec.html#id2804923
 //
@@ -3678,7 +3819,7 @@ module.exports = Schema;
 
 module.exports = require('./json');
 
-},{"./json":15}],13:[function(require,module,exports){
+},{"./json":16}],14:[function(require,module,exports){
 // JS-YAML's default schema for `safeLoad` function.
 // It is not described in the YAML specification.
 //
@@ -3702,7 +3843,7 @@ module.exports = require('./core').extend({
   ]
 });
 
-},{"../type/binary":18,"../type/merge":23,"../type/omap":25,"../type/pairs":26,"../type/set":28,"../type/timestamp":30,"./core":12}],14:[function(require,module,exports){
+},{"../type/binary":19,"../type/merge":24,"../type/omap":26,"../type/pairs":27,"../type/set":29,"../type/timestamp":31,"./core":13}],15:[function(require,module,exports){
 // Standard YAML's Failsafe schema.
 // http://www.yaml.org/spec/1.2/spec.html#id2802346
 
@@ -3721,7 +3862,7 @@ module.exports = new Schema({
   ]
 });
 
-},{"../schema":11,"../type/map":22,"../type/seq":27,"../type/str":29}],15:[function(require,module,exports){
+},{"../schema":12,"../type/map":23,"../type/seq":28,"../type/str":30}],16:[function(require,module,exports){
 // Standard YAML's JSON schema.
 // http://www.yaml.org/spec/1.2/spec.html#id2803231
 //
@@ -3742,7 +3883,7 @@ module.exports = require('./failsafe').extend({
   ]
 });
 
-},{"../type/bool":19,"../type/float":20,"../type/int":21,"../type/null":24,"./failsafe":14}],16:[function(require,module,exports){
+},{"../type/bool":20,"../type/float":21,"../type/int":22,"../type/null":25,"./failsafe":15}],17:[function(require,module,exports){
 'use strict';
 
 
@@ -3845,7 +3986,7 @@ function makeSnippet(mark, options) {
 
 module.exports = makeSnippet;
 
-},{"./common":7}],17:[function(require,module,exports){
+},{"./common":8}],18:[function(require,module,exports){
 'use strict';
 
 var YAMLException = require('./exception');
@@ -3913,7 +4054,7 @@ function Type(tag, options) {
 
 module.exports = Type;
 
-},{"./exception":9}],18:[function(require,module,exports){
+},{"./exception":10}],19:[function(require,module,exports){
 'use strict';
 
 /*eslint-disable no-bitwise*/
@@ -4040,7 +4181,7 @@ module.exports = new Type('tag:yaml.org,2002:binary', {
   represent: representYamlBinary
 });
 
-},{"../type":17}],19:[function(require,module,exports){
+},{"../type":18}],20:[function(require,module,exports){
 'use strict';
 
 var Type = require('../type');
@@ -4077,7 +4218,7 @@ module.exports = new Type('tag:yaml.org,2002:bool', {
   defaultStyle: 'lowercase'
 });
 
-},{"../type":17}],20:[function(require,module,exports){
+},{"../type":18}],21:[function(require,module,exports){
 'use strict';
 
 var common = require('../common');
@@ -4176,7 +4317,7 @@ module.exports = new Type('tag:yaml.org,2002:float', {
   defaultStyle: 'lowercase'
 });
 
-},{"../common":7,"../type":17}],21:[function(require,module,exports){
+},{"../common":8,"../type":18}],22:[function(require,module,exports){
 'use strict';
 
 var common = require('../common');
@@ -4334,7 +4475,7 @@ module.exports = new Type('tag:yaml.org,2002:int', {
   }
 });
 
-},{"../common":7,"../type":17}],22:[function(require,module,exports){
+},{"../common":8,"../type":18}],23:[function(require,module,exports){
 'use strict';
 
 var Type = require('../type');
@@ -4344,7 +4485,7 @@ module.exports = new Type('tag:yaml.org,2002:map', {
   construct: function (data) { return data !== null ? data : {}; }
 });
 
-},{"../type":17}],23:[function(require,module,exports){
+},{"../type":18}],24:[function(require,module,exports){
 'use strict';
 
 var Type = require('../type');
@@ -4358,7 +4499,7 @@ module.exports = new Type('tag:yaml.org,2002:merge', {
   resolve: resolveYamlMerge
 });
 
-},{"../type":17}],24:[function(require,module,exports){
+},{"../type":18}],25:[function(require,module,exports){
 'use strict';
 
 var Type = require('../type');
@@ -4395,7 +4536,7 @@ module.exports = new Type('tag:yaml.org,2002:null', {
   defaultStyle: 'lowercase'
 });
 
-},{"../type":17}],25:[function(require,module,exports){
+},{"../type":18}],26:[function(require,module,exports){
 'use strict';
 
 var Type = require('../type');
@@ -4441,7 +4582,7 @@ module.exports = new Type('tag:yaml.org,2002:omap', {
   construct: constructYamlOmap
 });
 
-},{"../type":17}],26:[function(require,module,exports){
+},{"../type":18}],27:[function(require,module,exports){
 'use strict';
 
 var Type = require('../type');
@@ -4496,7 +4637,7 @@ module.exports = new Type('tag:yaml.org,2002:pairs', {
   construct: constructYamlPairs
 });
 
-},{"../type":17}],27:[function(require,module,exports){
+},{"../type":18}],28:[function(require,module,exports){
 'use strict';
 
 var Type = require('../type');
@@ -4506,7 +4647,7 @@ module.exports = new Type('tag:yaml.org,2002:seq', {
   construct: function (data) { return data !== null ? data : []; }
 });
 
-},{"../type":17}],28:[function(require,module,exports){
+},{"../type":18}],29:[function(require,module,exports){
 'use strict';
 
 var Type = require('../type');
@@ -4537,7 +4678,7 @@ module.exports = new Type('tag:yaml.org,2002:set', {
   construct: constructYamlSet
 });
 
-},{"../type":17}],29:[function(require,module,exports){
+},{"../type":18}],30:[function(require,module,exports){
 'use strict';
 
 var Type = require('../type');
@@ -4547,7 +4688,7 @@ module.exports = new Type('tag:yaml.org,2002:str', {
   construct: function (data) { return data !== null ? data : ''; }
 });
 
-},{"../type":17}],30:[function(require,module,exports){
+},{"../type":18}],31:[function(require,module,exports){
 'use strict';
 
 var Type = require('../type');
@@ -4637,7 +4778,7 @@ module.exports = new Type('tag:yaml.org,2002:timestamp', {
   represent: representYamlTimestamp
 });
 
-},{"../type":17}],31:[function(require,module,exports){
+},{"../type":18}],32:[function(require,module,exports){
 (function (process){(function (){
 // 'path' module extracted from Node.js v8.11.1 (only the posix part)
 // transplited with Babel
@@ -5170,7 +5311,7 @@ posix.posix = posix;
 module.exports = posix;
 
 }).call(this)}).call(this,require('_process'))
-},{"_process":32}],32:[function(require,module,exports){
+},{"_process":33}],33:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -5356,7 +5497,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],33:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 ;/*! showdown v 1.9.1 - 02-11-2019 */
 (function(){
 /**
@@ -10501,4 +10642,4 @@ if (typeof define === 'function' && define.amd) {
 
 
 
-},{}]},{},[4]);
+},{}]},{},[5]);

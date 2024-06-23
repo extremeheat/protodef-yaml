@@ -30,7 +30,7 @@ function toYAML(input, followImports = true, document = false) {
 	}
 
 	const imported = []
-	
+
 	function checkIfJson(key, val) { //  ¯\(°_o)/¯
 		if (key.includes('"') || val.includes('[[') || val.includes('[{') || val.includes('{') || val.includes('}')) return true
 		if (!val.includes('[]') && val.includes('[')) return true
@@ -40,7 +40,8 @@ function toYAML(input, followImports = true, document = false) {
 	}
 
 	function validateKey(line, key) { }
-	
+
+	if (!files.main) throw new Error('A `main` file is required. Files given: ' + Object.keys(files).join(', '))
 	let data = files.main
 	data = data.replace(/\t/g, '    ')
 	const lines = data.split('\n')
@@ -50,7 +51,8 @@ function toYAML(input, followImports = true, document = false) {
 	function pars() {
 		let modified = false
 		for (let i = 0; i < lines.length; i++) {
-			let [key, val] = lines[i].trim().split(':', 2)
+			const trimedLine = lines[i].trim()
+			let [key, val] = trimedLine.endsWith(':') ? [trimedLine.slice(0, -1), ''] : trimedLine.split(': ', 2)
 			const thisLevel = getIndentation(lines[i])
 			const nextLevel = getIndentation(lines[i + 1] || '')
 			if (key.startsWith('#')) {
@@ -119,7 +121,7 @@ function toYAML(input, followImports = true, document = false) {
 				} else if (val.includes('=>')) {
 					const type = val.replace('=>', '').trim()
 					lines[i] = pad(thisLevel, `"%map,${key},${type}":`)
-					
+
 					if (document) { // we need index numbers for the docs
 						let autoIncrementPos = 0
 						for (let j = i + 1; j < lines.length; j++) {
@@ -152,7 +154,7 @@ function toYAML(input, followImports = true, document = false) {
 					const num = key.replace(/'/g, '')
 					lines[i] = pad(thisLevel, `'%n,${parseInt(num)}': ${val}`)
 				} else if (val.includes('=>')) {
-					const [sizeType,valueType] = val.split('=>')
+					const [sizeType, valueType] = val.split('=>')
 					lines[i] = pad(thisLevel, `"%map,${key},${sizeType.trim()},${valueType.trim()}":`)
 				}
 			}
@@ -228,15 +230,22 @@ function transform(json) {
 				}
 			}
 		}
+		if (name && name.endsWith('?')) {
+			const pushed = ctx[ctx.length - 1]
+			if (pushed.type) {
+				pushed.name = pushed.name.slice(0, -1)
+				pushed.type = ['option', pushed.type]
+			}
+		}
 	}
 
 	function trans(obj, ctx) {
 		ctx = ctx || []
 
-		function ctxPush (data) {
+		function ctxPush(data) {
 			if (data.name && data.name.endsWith('?')) {
-				data.name = 
-				ctx.push({ ...data, name: data.name.slice(0, -1), type: ["option", data.type] })
+				data.name =
+					ctx.push({ ...data, name: data.name.slice(0, -1), type: ["option", data.type] })
 			} else {
 				ctx.push(data)
 			}
@@ -246,7 +255,10 @@ function transform(json) {
 			let val = obj[key]
 			if (key.startsWith('!')) continue
 
-			if (typeof val === 'object') {
+			if (Array.isArray(val) && !key.startsWith('%')) { // pass thru protodef json
+				if (key === '_') ctxPush({ anon: true, type: val })
+				else ctxPush({ name: key, type: val })
+			} else if (typeof val === 'object') {
 				if (key.startsWith('%')) {
 					const args = key.split(',')
 					if (key.startsWith('%map')) {
@@ -294,9 +306,13 @@ function transform(json) {
 								const tokens = _keyName.replace('if ', '').split(' or ')
 								for (var token of tokens) {
 									token = token.trim()
+									if (Array.isArray(_val) && !_key.startsWith('%')) {
+										as[token] = _val // inline ProtoDef JSON ; no parsing needed
+										continue
+									}
 									as[token] = typeof _val === 'string' ? _val : ['container', []]
 									if (typeof _val === 'object') {
-										if (_key.startsWith('%switch')) {
+										if (_key.startsWith('%switch') || _key.startsWith('%map')) {
 											trans({ [_key]: _val }, as[token][1])
 											as[token] = as[token][1][0].type
 										} else {
@@ -310,9 +326,11 @@ function transform(json) {
 								}
 							} else if (_keyName.startsWith('default')) {
 								def = []
-								if (typeof _val === 'object') {
+								if (Array.isArray(_val) && !_key.startsWith('%')) {
+									as[token] = _val // inline ProtoDef JSON ; no parsing needed
+								} else if (typeof _val === 'object') {
 									def = ['container', []]
-									if (_key.startsWith('%switch')) {
+									if (_key.startsWith('%switch') || _key.startsWith('%map')) {
 										trans({ [_key]: _val }, def[1])
 										def = def[1][0].type
 									} else {
@@ -405,13 +423,37 @@ function formFinal(inp, out) {
 	return ret
 }
 
+function applyStructuringTf(obj, decontainerize = true) {
+	// move ^path.to.final -> {path:{to:{final}}} and decontainerize
+	const json = structuredClone(obj)
+	for (const key in json) {
+		const val = json[key]
+		if (key.startsWith('^')) {
+			const decontainerized = decontainerize ? Object.fromEntries(Object.values(val[1]).map((e) => [e.name, e.type])) : val
+			const slices = key.slice(1).split('.')
+			let node = json
+			let lastSlice
+			let lastNode
+			for (const slice of slices) {
+				node[slice] = node[slice] || {}
+				lastNode = node
+				lastSlice = slice
+				node = node[slice]
+			}
+			lastNode[lastSlice] = decontainerized
+			delete json[key]
+		}
+	}
+	return json
+}
+
 function getIntermediate(input, includeComments, followImports = false) {
 	return parseYAML(toYAML(input, followImports, includeComments))
 }
 
-function compile(input, output) {
-	const ret = formFinal(transform(parseYAML(toYAML(input))))
-
+function compile(input, output, applyStructuringTransform = true) {
+	let ret = formFinal(transform(parseYAML(toYAML(input))))
+	if (applyStructuringTransform) ret = applyStructuringTf(ret)
 	if (typeof output === 'string') fs.writeFileSync(output, JSON.stringify(ret, null, 2))
 	return ret
 }
