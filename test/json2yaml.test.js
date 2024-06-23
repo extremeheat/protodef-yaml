@@ -9,7 +9,7 @@ describe('json2yaml', function () {
         { name: 'SomeField', type: 'bool' }
       ]]
     }, 0)
-    assert.strictEqual(yaml, 'integer: i32\nsomeContainer:\n  SomeField: bool\n')
+    assert.strictEqual(yaml, 'integer: i32\nsomeContainer:\n   SomeField: bool\n')
   })
   let text = ''
   it('convert JSON into YAML with structured outputs', function () {
