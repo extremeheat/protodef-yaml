@@ -1,8 +1,9 @@
-function toYAML(obj, depth) {
+function toYAML(obj, depth, tabSize = 3) {
+  const spacing = ' '.repeat(tabSize)
   let text = ''
   function convert(json, depth = 0) {
     let skipNextPadding = false
-    const pad = txt => skipNextPadding ? (skipNextPadding = false, txt) : (' '.repeat(depth * 2) + txt)
+    const pad = txt => skipNextPadding ? (skipNextPadding = false, txt) : (' '.repeat(depth * tabSize) + txt)
     function processEntry(key, value, anon) {
       if (value[0] === 'option' && !skipNextPadding) { // skipNextPadding = switch
         key += `?`
@@ -19,7 +20,7 @@ function toYAML(obj, depth) {
         if (value[0] === 'container') {
           text += pad(`\n`)
           if (value[1].length === 0) {
-            text += pad(`  # Empty\n`) // yaml doesn't support empty containers
+            text += pad(`${spacing}# Empty\n`) // yaml doesn't support empty containers
           } else {
             convert(value[1], depth + 1)
           }
@@ -30,10 +31,18 @@ function toYAML(obj, depth) {
           } else {
             text += ` ${sw.compareTo} ?\n`
             for (const fieldName in sw.fields) {
-              text += pad(`  if `)
+              text += pad(`${spacing}if `)
               depth += 1
               skipNextPadding = true
               processEntry(fieldName, sw.fields[fieldName])
+              depth -= 1
+            }
+            // handle default
+            if (sw.default) {
+              text += pad(`${spacing}`)
+              depth += 1
+              skipNextPadding = true
+              processEntry('default', sw.default)
               depth -= 1
             }
           }
@@ -55,11 +64,11 @@ function toYAML(obj, depth) {
           const map = value[1]
           text += ` ${map.type} =>\n`
           for (const key in map.mappings) {
-            text += pad(`  ${key}: ${map.mappings[key]}\n`)
+            text += pad(`${spacing}${key}: ${map.mappings[key]}\n`)
           }
         } else {
-          let json = JSON.stringify(value, null, 2)
-          json = json.replaceAll('\n', '\n' + ' '.repeat(depth * 2))
+          let json = JSON.stringify(value, null, tabSize)
+          json = json.replaceAll('\n', '\n' + ' '.repeat(depth * tabSize))
           text += ` ${json}\n`
         }
       }
