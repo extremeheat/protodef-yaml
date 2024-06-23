@@ -25,7 +25,7 @@ npx protodef-yaml input.yml docs.html
 See [API.md](docs/API.md)
 
 ### Syntax
-Refer to [this documentation](https://github.com/PrismarineJS/bedrock-protocol/blob/master/CONTRIBUTING.md#packet-serialization), also see test/ for example files
+Refer to [this documentation](https://github.com/PrismarineJS/bedrock-protocol/blob/master/docs/CONTRIBUTING.md#packet-serialization), also see test/ for example files.
 
 Example input:
 
@@ -189,14 +189,8 @@ The differences to YAML:
 * parent nodes with children can have a value
 * keys starting with '!' are ignored in the final output
 
-You can also embed JSON for custom ProtoDef types as usual, for example:
+You can also embed JSON for custom ProtoDef types as usual as YAML is a superset of JSON, for example:
 
 ```yaml
 string: ["pstring", {"countType": "i32"}]
-```
-
-*Note:* the parser only supports this at a root level. To use nested json inside yaml, you can encapsulate a JSON array with a single quote. For example:
-```yaml
-SomeType:
-   some_string: '["pstring", {"countType": "i32"}]'
 ```
