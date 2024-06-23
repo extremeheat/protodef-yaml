@@ -22,7 +22,7 @@ npx protodef-yaml input.yml docs.html
 
 ### API
 
-See [API.md](docs/API.md)
+See [API.md](./API.md)
 
 ### Syntax
 Refer to [this documentation](https://github.com/PrismarineJS/bedrock-protocol/blob/master/docs/CONTRIBUTING.md#packet-serialization), also see test/ for example files.
