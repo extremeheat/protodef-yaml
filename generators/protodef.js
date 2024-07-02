@@ -327,7 +327,7 @@ function transform(json) {
 							} else if (_keyName.startsWith('default')) {
 								def = []
 								if (Array.isArray(_val) && !_key.startsWith('%')) {
-									as[token] = _val // inline ProtoDef JSON ; no parsing needed
+									def = _val // inline ProtoDef JSON ; no parsing needed
 								} else if (typeof _val === 'object') {
 									def = ['container', []]
 									if (_key.startsWith('%switch') || _key.startsWith('%map')) {
