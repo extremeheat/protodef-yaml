@@ -1,3 +1,7 @@
+## 1.5.1
+* [Fix %switch->%array handling for inline ProtoDef JSON](https://github.com/extremeheat/protodef-yaml/commit/eaabc2b3b3471da2f488f36eae183c28ed6b4d11) (thanks @extremeheat)
+* [Fix %switch default case handling with inline ProtoDef JSON](https://github.com/extremeheat/protodef-yaml/commit/8aba8c76bb12b6ff2347c72d6511d8a3509b11a9) (thanks @extremeheat)
+
 ## 1.5.0
 * [Update readme and cli (#16)](https://github.com/extremeheat/protodef-yaml/commit/df1567d5cbc61d51ca3488d879ca01eb6f6c701d) (thanks @extremeheat)
 * [Support for JSON->YAML and YAML->structured JSON outputs (#15)](https://github.com/extremeheat/protodef-yaml/commit/fd471386c4c541dc71cb9c6daa63abda0b8ec524) (thanks @extremeheat)
