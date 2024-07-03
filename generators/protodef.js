@@ -102,6 +102,10 @@ function toYAML(input, followImports = true, document = false) {
 				if (key == '!import' || key.includes('Docs')) nkey += ',' + i
 				nkey += "'"
 				lines[i] = lines[i].replace(key, nkey)
+				// Enforce parsing as string if we have a float like 1.20
+				if (!isNaN(val) && (val.includes('.') && val.endsWith('0'))) {
+					lines[i] = lines[i].replace(': ', ': !!str ')
+				}
 				continue
 			}
 
