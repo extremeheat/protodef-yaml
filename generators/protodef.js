@@ -73,7 +73,11 @@ function toYAML(input, followImports = true, document = false) {
 				}
 			}
 			key = key.trim(); val = val ? val.trim() : ''
-			if (key == '_') key = '__' + i
+			if (key === '_') {
+				const nkey = '__' + i
+				lines[i] = lines[i].replace(key, nkey)
+				key = nkey
+			}
 			if (!key) continue
 			if (key.startsWith('!')) {
 				if (key.startsWith('!StartDocs')) startedDocumenting = true
@@ -256,7 +260,7 @@ function transform(json) {
 			if (key.startsWith('!')) continue
 
 			if (Array.isArray(val) && !key.startsWith('%')) { // pass thru protodef json
-				if (key === '_') ctxPush({ anon: true, type: val })
+				if (key.startsWith('__')) ctxPush({ anon: true, type: val })
 				else ctxPush({ name: key, type: val })
 			} else if (typeof val === 'object') {
 				if (key.startsWith('%')) {
