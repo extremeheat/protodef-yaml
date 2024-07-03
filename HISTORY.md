@@ -1,3 +1,7 @@
+## 1.5.2
+* [Parse !special fields as string if we have a float-string parsing disreprency](https://github.com/extremeheat/protodef-yaml/commit/aecec767963b4248b41de01c652f34776ae21382) (thanks @extremeheat)
+* [Fix anonymous key handling in yaml compiler](https://github.com/extremeheat/protodef-yaml/commit/39be9cf183115336fe578aa525ec424ae5b88a61) (thanks @extremeheat)
+
 ## 1.5.1
 * [Fix %switch->%array handling for inline ProtoDef JSON](https://github.com/extremeheat/protodef-yaml/commit/eaabc2b3b3471da2f488f36eae183c28ed6b4d11) (thanks @extremeheat)
 * [Fix %switch default case handling with inline ProtoDef JSON](https://github.com/extremeheat/protodef-yaml/commit/8aba8c76bb12b6ff2347c72d6511d8a3509b11a9) (thanks @extremeheat)
