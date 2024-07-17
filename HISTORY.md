@@ -1,3 +1,6 @@
+## 1.5.3
+* [Use undefined instead of void for ProtoDef switch defaults](https://github.com/extremeheat/protodef-yaml/commit/855cc721b8785761411bc7c6aac6fc155612e9a6) (thanks @extremeheat)
+
 ## 1.5.2
 * [Parse !special fields as string if we have a float-string parsing disreprency](https://github.com/extremeheat/protodef-yaml/commit/aecec767963b4248b41de01c652f34776ae21382) (thanks @extremeheat)
 * [Fix anonymous key handling in yaml compiler](https://github.com/extremeheat/protodef-yaml/commit/39be9cf183115336fe578aa525ec424ae5b88a61) (thanks @extremeheat)
