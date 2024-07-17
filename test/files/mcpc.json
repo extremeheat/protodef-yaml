@@ -121,8 +121,7 @@
                     }
                   ]
                 ]
-              },
-              "default": "void"
+              }
             }
           ]
         }
@@ -265,8 +264,7 @@
                     "compareTo": "positionType",
                     "fields": {
                       "minecraft:entity": "varint"
-                    },
-                    "default": "void"
+                    }
                   }
                 ]
               },
@@ -278,8 +276,7 @@
                     "compareTo": "positionType",
                     "fields": {
                       "minecraft:entity": "varint"
-                    },
-                    "default": "void"
+                    }
                   }
                 ]
               },
@@ -292,8 +289,7 @@
                     "fields": {
                       "minecraft:block": "position",
                       "minecraft:entity": "varint"
-                    },
-                    "default": "void"
+                    }
                   }
                 ]
               },
@@ -312,8 +308,7 @@
               }
             ]
           ]
-        },
-        "default": "void"
+        }
       }
     ],
     "ingredient": [
@@ -398,8 +393,7 @@
                         "count": 256
                       }
                     ]
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             }
@@ -484,8 +478,7 @@
           "sniffer_state": "varint",
           "vector3": "vec3f",
           "quaternion": "vec4f"
-        },
-        "default": "void"
+        }
       }
     ],
     "entityMetadata": [
@@ -783,8 +776,7 @@
               "compareTo": "flags/has_redirect_node",
               "fields": {
                 "1": "varint"
-              },
-              "default": "void"
+              }
             }
           ]
         },
@@ -915,8 +907,7 @@
                                       "compareTo": "flags/min_present",
                                       "fields": {
                                         "1": "f32"
-                                      },
-                                      "default": "void"
+                                      }
                                     }
                                   ]
                                 },
@@ -928,8 +919,7 @@
                                       "compareTo": "flags/max_present",
                                       "fields": {
                                         "1": "f32"
-                                      },
-                                      "default": "void"
+                                      }
                                     }
                                   ]
                                 }
@@ -969,8 +959,7 @@
                                       "compareTo": "flags/min_present",
                                       "fields": {
                                         "1": "f64"
-                                      },
-                                      "default": "void"
+                                      }
                                     }
                                   ]
                                 },
@@ -982,8 +971,7 @@
                                       "compareTo": "flags/max_present",
                                       "fields": {
                                         "1": "f64"
-                                      },
-                                      "default": "void"
+                                      }
                                     }
                                   ]
                                 }
@@ -1023,8 +1011,7 @@
                                       "compareTo": "flags/min_present",
                                       "fields": {
                                         "1": "i32"
-                                      },
-                                      "default": "void"
+                                      }
                                     }
                                   ]
                                 },
@@ -1036,8 +1023,7 @@
                                       "compareTo": "flags/max_present",
                                       "fields": {
                                         "1": "i32"
-                                      },
-                                      "default": "void"
+                                      }
                                     }
                                   ]
                                 }
@@ -1077,8 +1063,7 @@
                                       "compareTo": "flags/min_present",
                                       "fields": {
                                         "1": "i64"
-                                      },
-                                      "default": "void"
+                                      }
                                     }
                                   ]
                                 },
@@ -1090,8 +1075,7 @@
                                       "compareTo": "flags/max_present",
                                       "fields": {
                                         "1": "i64"
-                                      },
-                                      "default": "void"
+                                      }
                                     }
                                   ]
                                 }
@@ -1223,8 +1207,7 @@
                             "minecraft:template_rotation": "void",
                             "minecraft:heightmap": "void",
                             "minecraft:uuid": "void"
-                          },
-                          "default": "void"
+                          }
                         }
                       ]
                     },
@@ -1236,15 +1219,13 @@
                           "compareTo": "../flags/has_custom_suggestions",
                           "fields": {
                             "1": "string"
-                          },
-                          "default": "void"
+                          }
                         }
                       ]
                     }
                   ]
                 ]
-              },
-              "default": "void"
+              }
             }
           ]
         }
@@ -1338,8 +1319,7 @@
                   "fields": {
                     "set_protocol": "packet_set_protocol",
                     "legacy_server_list_ping": "packet_legacy_server_list_ping"
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             }
@@ -1394,8 +1374,7 @@
                   "fields": {
                     "server_info": "packet_server_info",
                     "ping": "packet_ping"
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             }
@@ -1443,8 +1422,7 @@
                   "fields": {
                     "ping_start": "packet_ping_start",
                     "ping": "packet_ping"
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             }
@@ -1591,8 +1569,7 @@
                     "success": "packet_success",
                     "compress": "packet_compress",
                     "login_plugin_request": "packet_login_plugin_request"
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             }
@@ -1687,8 +1664,7 @@
                     "encryption_begin": "packet_encryption_begin",
                     "login_plugin_response": "packet_login_plugin_response",
                     "login_acknowledged": "packet_login_acknowledged"
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             }
@@ -1876,8 +1852,7 @@
                     "add_resource_pack": "packet_add_resource_pack",
                     "feature_flags": "packet_feature_flags",
                     "tags": "packet_tags"
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             }
@@ -2005,8 +1980,7 @@
                     "keep_alive": "packet_keep_alive",
                     "pong": "packet_pong",
                     "resource_pack_receive": "packet_resource_pack_receive"
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             }
@@ -2235,8 +2209,7 @@
                                           "compareTo": "flags/has_background_texture",
                                           "fields": {
                                             "1": "string"
-                                          },
-                                          "default": "void"
+                                          }
                                         }
                                       ]
                                     },
@@ -2423,8 +2396,7 @@
                   "fields": {
                     "0": "anonymousNbt",
                     "3": "anonymousNbt"
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             },
@@ -2437,8 +2409,7 @@
                   "fields": {
                     "0": "f32",
                     "2": "f32"
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             },
@@ -2451,8 +2422,7 @@
                   "fields": {
                     "0": "varint",
                     "4": "varint"
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             },
@@ -2465,8 +2435,7 @@
                   "fields": {
                     "0": "varint",
                     "4": "varint"
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             },
@@ -2479,8 +2448,7 @@
                   "fields": {
                     "0": "u8",
                     "5": "u8"
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             }
@@ -2604,8 +2572,7 @@
                   "compareTo": "isEntity",
                   "fields": {
                     "true": "varint"
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             },
@@ -2617,8 +2584,7 @@
                   "compareTo": "isEntity",
                   "fields": {
                     "true": "varint"
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             }
@@ -2831,8 +2797,7 @@
                         "count": 256
                       }
                     ]
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             }
@@ -3451,8 +3416,7 @@
                   "compareTo": "columns",
                   "fields": {
                     "0": "void"
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             },
@@ -3464,8 +3428,7 @@
                   "compareTo": "columns",
                   "fields": {
                     "0": "void"
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             },
@@ -3477,8 +3440,7 @@
                   "compareTo": "columns",
                   "fields": {
                     "0": "void"
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             },
@@ -3490,8 +3452,7 @@
                   "compareTo": "columns",
                   "fields": {
                     "0": "void"
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             }
@@ -3796,8 +3757,7 @@
                         "type": "i64"
                       }
                     ]
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             },
@@ -3918,8 +3878,7 @@
                               "59": "game_profile",
                               "61": "game_profile",
                               "63": "game_profile"
-                            },
-                            "default": "void"
+                            }
                           }
                         ]
                       },
@@ -3962,8 +3921,7 @@
                               "59": "chat_session",
                               "62": "chat_session",
                               "63": "chat_session"
-                            },
-                            "default": "void"
+                            }
                           }
                         ]
                       },
@@ -4006,8 +3964,7 @@
                               "61": "varint",
                               "62": "varint",
                               "63": "varint"
-                            },
-                            "default": "void"
+                            }
                           }
                         ]
                       },
@@ -4050,8 +4007,7 @@
                               "61": "bool",
                               "62": "bool",
                               "63": "bool"
-                            },
-                            "default": "void"
+                            }
                           }
                         ]
                       },
@@ -4094,8 +4050,7 @@
                               "61": "varint",
                               "62": "varint",
                               "63": "varint"
-                            },
-                            "default": "void"
+                            }
                           }
                         ]
                       },
@@ -4234,8 +4189,7 @@
                                 "option",
                                 "anonymousNbt"
                               ]
-                            },
-                            "default": "void"
+                            }
                           }
                         ]
                       }
@@ -4342,8 +4296,7 @@
                         "type": "string"
                       }
                     ]
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             }
@@ -4690,8 +4643,7 @@
                   "fields": {
                     "0": "anonymousNbt",
                     "2": "anonymousNbt"
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             },
@@ -4704,8 +4656,7 @@
                   "fields": {
                     "0": "varint",
                     "2": "varint"
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             },
@@ -4724,8 +4675,7 @@
                       "option",
                       "varint"
                     ]
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             },
@@ -4743,8 +4693,7 @@
                         "fields": {
                           "1": "anonymousNbt",
                           "2": "anonymousNbt"
-                        },
-                        "default": "void"
+                        }
                       }
                     ],
                     "2": [
@@ -4754,12 +4703,10 @@
                         "fields": {
                           "1": "anonymousNbt",
                           "2": "anonymousNbt"
-                        },
-                        "default": "void"
+                        }
                       }
                     ]
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             }
@@ -4804,8 +4751,7 @@
                   "fields": {
                     "0": "anonymousNbt",
                     "2": "anonymousNbt"
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             },
@@ -4818,8 +4764,7 @@
                   "fields": {
                     "0": "i8",
                     "2": "i8"
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             },
@@ -4832,8 +4777,7 @@
                   "fields": {
                     "0": "string",
                     "2": "string"
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             },
@@ -4846,8 +4790,7 @@
                   "fields": {
                     "0": "string",
                     "2": "string"
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             },
@@ -4860,8 +4803,7 @@
                   "fields": {
                     "0": "varint",
                     "2": "varint"
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             },
@@ -4874,8 +4816,7 @@
                   "fields": {
                     "0": "anonymousNbt",
                     "2": "anonymousNbt"
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             },
@@ -4888,8 +4829,7 @@
                   "fields": {
                     "0": "anonymousNbt",
                     "2": "anonymousNbt"
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             },
@@ -4921,8 +4861,7 @@
                         "type": "string"
                       }
                     ]
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             }
@@ -4966,8 +4905,7 @@
                   "fields": {
                     "1": "anonymousNbt",
                     "2": "anonymousNbt"
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             }
@@ -5029,8 +4967,7 @@
                         }
                       ]
                     ]
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             },
@@ -5072,8 +5009,7 @@
                   "fields": {
                     "1": "varint",
                     "3": "varint"
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             },
@@ -5086,8 +5022,7 @@
                   "fields": {
                     "2": "string",
                     "3": "string"
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             }
@@ -5123,8 +5058,7 @@
                         }
                       ]
                     ]
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             },
@@ -5533,8 +5467,7 @@
                                 ]
                               ],
                               "minecraft:crafting_decorated_pot": "minecraft_simple_recipe_format"
-                            },
-                            "default": "void"
+                            }
                           }
                         ]
                       }
@@ -6109,8 +6042,7 @@
                     "tags": "packet_tags",
                     "set_ticking_state": "packet_set_ticking_state",
                     "step_tick": "packet_step_tick"
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             }
@@ -6615,8 +6547,7 @@
                   "compareTo": "mouse",
                   "fields": {
                     "2": "f32"
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             },
@@ -6628,8 +6559,7 @@
                   "compareTo": "mouse",
                   "fields": {
                     "2": "f32"
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             },
@@ -6641,8 +6571,7 @@
                   "compareTo": "mouse",
                   "fields": {
                     "2": "f32"
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             },
@@ -6655,8 +6584,7 @@
                   "fields": {
                     "0": "varint",
                     "2": "varint"
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             },
@@ -7107,8 +7035,7 @@
                   "fields": {
                     "0": "string",
                     "1": "void"
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             }
@@ -7324,8 +7251,7 @@
                     "configuration_acknowledged": "packet_configuration_acknowledged",
                     "ping_request": "packet_ping_request",
                     "set_slot_state": "packet_set_slot_state"
-                  },
-                  "default": "void"
+                  }
                 }
               ]
             }
