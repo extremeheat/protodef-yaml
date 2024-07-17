@@ -367,7 +367,7 @@ function transform(json) {
 								{
 									compareTo: cmp.replace('?', ''),
 									fields: as,
-									default: def.length ? def : 'void'
+									default: def.length ? def : undefined
 								}
 							]
 						})
