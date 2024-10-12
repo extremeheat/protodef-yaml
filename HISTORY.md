@@ -1,3 +1,6 @@
+## 1.5.4
+* [Fix array integer count](https://github.com/extremeheat/protodef-yaml/commit/00190ecb59a79724a10e6d1ac4e6c8653fdf5d46) (thanks @extremeheat)
+
 ## 1.5.3
 * [Use undefined instead of void for ProtoDef switch defaults](https://github.com/extremeheat/protodef-yaml/commit/855cc721b8785761411bc7c6aac6fc155612e9a6) (thanks @extremeheat)
 
