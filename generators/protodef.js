@@ -196,6 +196,7 @@ function transform(json) {
 		log('OBJ', obj)
 		if (countType.startsWith('$')) {
 			count = countType.slice(1)
+         if (count.length && count == parseInt(count)) count = parseInt(count)
 			countType = undefined
 		}
 		if (typeof obj === 'string') {
