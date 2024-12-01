@@ -1,3 +1,4 @@
+!StartDocs: true
 ^types:
   varint: native
   varlong: native
@@ -604,6 +605,10 @@
       if set_protocol: packet_set_protocol
       if legacy_server_list_ping: packet_legacy_server_list_ping
 ^status.toClient.types:
+  # **Server Info**
+  # This is a test!
+  #
+  # This is a new line test!
   packet_server_info:  
     response: string
   packet_ping:  
