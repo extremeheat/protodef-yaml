@@ -1,3 +1,4 @@
+/* eslint-env mocha */
 const { compile, genYAML } = require('protodef-yaml')
 const assert = require('assert')
 
@@ -17,7 +18,7 @@ describe('json2yaml', function () {
     for (const state in protocol) {
       const data = protocol[state]
       if (state === 'types') {
-        text += `^types:\n`
+        text += '^types:\n'
         text += genYAML(data, 1)
       }
       if (data.toClient) {
@@ -37,6 +38,3 @@ describe('json2yaml', function () {
     assert(newJson)
   })
 })
-
-
-

@@ -1,24 +1,25 @@
-function toYAML(obj, depth, tabSize = 3) {
+/* eslint-disable no-return-assign */
+function toYAML (obj, depth, tabSize = 3) {
   const spacing = ' '.repeat(tabSize)
   let text = ''
-  function convert(json, depth = 0) {
+  function convert (json, depth = 0) {
     let skipNextPadding = false
     const pad = txt => skipNextPadding ? (skipNextPadding = false, txt) : (' '.repeat(depth * tabSize) + txt)
-    function processEntry(key, value, anon) {
+    function processEntry (key, value, anon) {
       if (value[0] === 'option' && !skipNextPadding) { // skipNextPadding = switch
-        key += `?`
+        key += '?'
         value = value[1]
       }
       if (typeof value === 'string') {
         text += pad(`${key}: ${value}\n`)
       } else if (Array.isArray(value)) {
         if (anon) {
-          text += pad(`_:`)
+          text += pad('_:')
         } else {
           text += pad(`${key}:`)
         }
         if (value[0] === 'container') {
-          text += pad(`\n`)
+          text += pad('\n')
           if (value[1].length === 0) {
             text += pad(`${spacing}# Empty\n`) // yaml doesn't support empty containers
           } else {
@@ -77,9 +78,11 @@ function toYAML(obj, depth, tabSize = 3) {
       for (const entry of json) {
         processEntry(entry.name, entry.type, entry.anon)
       }
-    } else for (let key in json) {
-      const value = json[key]
-      processEntry(key, value)
+    } else {
+      for (const key in json) {
+        const value = json[key]
+        processEntry(key, value)
+      }
     }
   }
   convert(obj, depth)

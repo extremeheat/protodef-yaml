@@ -5,7 +5,7 @@
   "main": "index.js",
   "bin": "./cli.js",
   "scripts": {
-    "test": "mocha",
+    "test": "npm run lint && mocha --exit",
     "lint": "standard",
     "fix": "standard --fix",
     "bundle": "browserify ./index.js -o docs/editor/bundle.js"
@@ -25,5 +25,10 @@
     "mocha": "^8.4.0",
     "protodef-yaml": "file:.",
     "standard": "^17.1.2"
+  },
+  "standard": {
+    "ignore": [
+      "docs"
+    ]
   }
 }
