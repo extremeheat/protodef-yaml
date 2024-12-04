@@ -1,6 +1,5 @@
 const showdown = require('showdown')
 
-
 /**
  * 
  * @param {object} toTransform Intermediary YAML turned to JSON
@@ -149,10 +148,10 @@ function generate(parsedSchema, options = {}) {
             const type = { server: 'Serverbound', client: 'Clientbound', both: 'Bidirectional', datatype: 'Datatype' }[bound]
 
             rows += `
-    <div class="packet-header" id="${idPrefix}${name}">
-    <a href="#${idPrefix}${name}"><div class='packet-id ${bound}'>${packetId}</div><div class='packet-name name'>${tfName(name)}</div></a>
-      <small style='vertical-align:middle;float:right'>${type}</small>
-    </div><br/>
+<div class="packet-header" id="${idPrefix}${name}">
+<a href="#${idPrefix}${name}"><div class='packet-id ${bound}'>${packetId}</div><div class='packet-name name'>${tfName(name)}</div></a>
+  <small style='vertical-align:middle;float:right'>${type}</small>
+</div><br/>
     \n<p>${nextComment()}</p>\n<table class='table-bordered'>${thead}\n`
 
             if (containerId.startsWith('%container')) { // Inline the container
@@ -248,7 +247,7 @@ thead td { font-weight: bold; background-color: #E0E0E0; }
 a { text-decoration: none; }
 .name { text-transform: capitalize; }
 .sitkcy-container { position: relative; }
-.sticky-header { position: sticky; top: 0; text-align: center; font-size: 1.5rem; }
+.sticky-header { position: sticky; top: 0; text-align: center; font-size: 1.5rem; background-color: white; padding: 8px; border-radius: 8px; }
 </style>
 </head>`
 

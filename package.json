@@ -6,6 +6,8 @@
   "bin": "./cli.js",
   "scripts": {
     "test": "mocha",
+    "lint": "standard",
+    "fix": "standard --fix",
     "bundle": "browserify ./index.js -o docs/editor/bundle.js"
   },
   "keywords": [
@@ -21,6 +23,7 @@
     "browserify": "^17.0.0",
     "browserify-fs": "^1.0.0",
     "mocha": "^8.4.0",
-    "protodef-yaml": "file:."
+    "protodef-yaml": "file:.",
+    "standard": "^17.1.2"
   }
 }
