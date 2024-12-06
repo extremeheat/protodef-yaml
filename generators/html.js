@@ -1,118 +1,116 @@
+/* eslint-disable no-unused-vars */
 const showdown = require('showdown')
 
 /**
- * 
+ *
  * @param {object} toTransform Intermediary YAML turned to JSON
- * @param {{ toTitleCase, includeHeader }} options Generation options 
+ * @param {{ toTitleCase, includeHeader }} options Generation options
  */
-function generate(parsedSchema, options = {}) {
-    let rows = options.includeHeader ? defaultHeader : ''
-    const converter = new showdown.Converter()
-    const md = text => converter.makeHtml(text)
+function generate (parsedSchema, options = {}) {
+  let rows = options.includeHeader ? defaultHeader : ''
+  const converter = new showdown.Converter()
+  const md = text => converter.makeHtml(text)
 
-    const thead = `<thead><tr><td>Field Name</td><td>Field Type</td><td>Notes</td></tr></thead>`
+  const thead = '<thead><tr><td>Field Name</td><td>Field Type</td><td>Notes</td></tr></thead>'
 
-    function toTitleCase(str) {
-        return str.replace(
-            /\w\S*/g,
-            function (txt) {
-                return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+  //   function toTitleCase (str) {
+  //     return str.replace(
+  //       /\w\S*/g,
+  //       function (txt) {
+  //         return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
+  //       }
+  //     )
+  //   }
+
+  const isStatement = key => key.startsWith('if ') || (key === 'default')
+  const tfName = (key, parent) => {
+    if (isStatement(key) && (parent?.includes('%switch'))) return `<span class='fake'>${key.replace('if', 'is').replace(/_/g, ' ')}</span>`
+    return key.startsWith('_') ? key : key.replace(/_/g, ' ').replace('$', '').replace('?', '')
+  }
+
+  function work (toTransform, idPrefix = '') {
+    let lastComment = ''
+    const nextComment = () => { const c = lastComment; lastComment = null; return md(c?.replace(/\n\n/g, '<br/>\n') || '') }
+
+    function parseContainer (key, val, depth = 1, parent) {
+      const pad = str => str.padStart(depth * 2) + '\n'
+      // Ignore comments
+      if (key.startsWith('!')) {
+        if (key.startsWith('!comment')) lastComment = lastComment ? lastComment + val : val
+        return
+      }
+      if (Array.isArray(val)) return
+
+      let extraTag = ''
+      const aname = key.startsWith('%') ? key.split(',')[1] : key
+      if (aname.endsWith('?')) extraTag += '<div class=\'tag tag-optional\'>optional</div>'
+
+      if (typeof val === 'object') {
+        if (key.startsWith('%switch')) {
+          const [_, what, condition] = key.split(',')
+          rows += pad(`<tr><td><b class='name'>${what.startsWith('_') ? '&#128257;' : tfName(what)}</b><br/><br/>${extraTag}<i><div class='tag tag-switch'>if <span class='name'>${tfName(condition)}</span></div></i></td><td colspan=2><table>`)
+          for (const k in val) {
+            // const condition = k.startsWith('%') ? k.split(',')[1] : k
+            // rows += pad(`<tr><td>${condition}</td><td><table>`)
+            const v = val[k]
+            parseContainer(k, v, depth + 1, key)
+            // rows += pad(`</table></td></tr>`)
+          }
+          rows += pad('</table></td></tr>')
+        } else if (key.startsWith('%container') || key.startsWith('if ')) {
+          const name = key.startsWith('%') ? key.split(',')[1] : key
+          rows += pad(`<tr><td class='name'>${tfName(name, parent)} ${extraTag}</td><td colspan=2 class='bordered'><table>`)
+          for (const k in val) {
+            const v = val[k]
+            parseContainer(k, v, depth + 1, key)
+          }
+          rows += pad('</table></td></tr>')
+        } else if (key.startsWith('%map')) {
+          const [_, what, type] = key.split(',')
+          rows += pad(`<tr><td class='name field-name'>${tfName(what, parent)} ${extraTag}</td><td colspan=2>${type} <span class='tag tag-enum'>enum</span><hr/> <table style='width:100%'>`)
+          for (const k in val) {
+            const v = val[k]
+            if (k.startsWith('!')) {
+              if (k.startsWith('!comment')) lastComment = lastComment ? lastComment + v : v
+              continue
             }
-        );
+
+            rows += pad(`  <tr><td class='name'>${tfName(k.startsWith('%') ? k.split(',')[1] : k)}</td><td class='name'>${tfName(v)}</td><td>${nextComment()}</td></tr>`)
+            // parseContainer(k, v, depth + 1)
+          }
+          rows += pad('</table></td></tr>')
+        } else if (key.startsWith('%array')) {
+          const [_, what, type, prefix] = key.split(',')
+          if (prefix) { // Prepend the length prefix
+            if (prefix.startsWith('$')) { rows += pad(`<tr><td colspan=2><i>Length for <span class='name'>${tfName(what, parent)}</span> below is <b class='name'>${tfName(prefix)}</b> from above</td><td ${type ? 'rowspan=2' : ''}>${nextComment()}</i></td></tr>`) } else { rows += pad(`<tr><td class='field-name'><span class='name'>${tfName(what, parent)}</span> length</td><td>${prefix}</td><td ${type ? 'rowspan=2' : ''}>${nextComment()}</td></tr>`) }
+          }
+          if (type) { // Inline array
+            rows += pad(`<tr><td class='field-name'><span class='name'>${tfName(what, parent)}</span> <div class="tag tag-array">array</div></td><td>${type}</td><td>${nextComment()}</td></tr>`)
+          } else {
+            rows += pad(`<tr><td class='field-name'><span class='name'>${tfName(what, parent)}</span> <div class="tag tag-array">array</div></td><td colspan=2><table>`)
+            for (const k in val) {
+              const v = val[k]
+              parseContainer(k, v, depth + 1, key)
+            }
+            rows += pad('</table></td></tr>')
+          }
+        }
+        // rows += pad('</td></tr>')
+      } else if (typeof val === 'string') {
+        rows += pad(`<tr><td class='field-name name'>${tfName(key, parent)} ${extraTag}</td><td>${tfType(val)}</td><td>${nextComment()}</td></tr>`)
+      }
     }
 
-    const isStatement = key => key.startsWith('if ') || key == 'default'
-    const tfName = (key, parent) => {
-        if (isStatement(key) && (parent?.includes('%switch'))) return `<span class='fake'>${key.replace('if', 'is').replace(/_/g, ' ')}</span>`
-        return key.startsWith('_') ? key : key.replace(/_/g, ' ').replace('$', '').replace('?', '')
+    rows += '<div class=\'container\'>'
+
+    // Build the TOC
+
+    const listOfTypes = []
+    const tfType = type => {
+      return listOfTypes.includes(type) ? `<a href="#${idPrefix}${type}">${type}</a>` : type
     }
 
-    function work(toTransform, idPrefix = '') {
-        let lastComment = ''
-        const nextComment = () => { const c = lastComment; lastComment = null; return md(c?.replace(/\n\n/g, '<br/>\n') || ''); }
-
-        function parseContainer(key, val, depth = 1, parent) {
-            const pad = str => str.padStart(depth * 2) + '\n'
-            // Ignore comments
-            if (key.startsWith('!')) {
-                if (key.startsWith('!comment')) lastComment = lastComment ? lastComment + val : val
-                return
-            }
-            if (Array.isArray(val)) return
-
-            let extraTag = ''
-            const aname = key.startsWith('%') ? key.split(',')[1] : key
-            if (aname.endsWith('?')) extraTag += `<div class='tag tag-optional'>optional</div>`
-
-            if (typeof val === 'object') {
-                if (key.startsWith('%switch')) {
-                    const [_, what, condition] = key.split(',')
-                    rows += pad(`<tr><td><b class='name'>${what.startsWith('_') ? '&#128257;' : tfName(what)}</b><br/><br/>${extraTag}<i><div class='tag tag-switch'>if <span class='name'>${tfName(condition)}</span></div></i></td><td colspan=2><table>`)
-                    for (let k in val) {
-                        let condition = k.startsWith('%') ? k.split(',')[1] : k
-                        // rows += pad(`<tr><td>${condition}</td><td><table>`)
-                        let v = val[k]
-                        parseContainer(k, v, depth + 1, key)
-                        // rows += pad(`</table></td></tr>`)
-                    }
-                    rows += pad(`</table></td></tr>`)
-                } else if (key.startsWith('%container') || key.startsWith('if ')) {
-                    const name = key.startsWith('%') ? key.split(',')[1] : key
-                    rows += pad(`<tr><td class='name'>${tfName(name, parent)} ${extraTag}</td><td colspan=2 class='bordered'><table>`)
-                    for (const k in val) {
-                        let v = val[k]
-                        parseContainer(k, v, depth + 1, key)
-                    }
-                    rows += pad(`</table></td></tr>`)
-                } else if (key.startsWith('%map')) {
-                    const [_, what, type] = key.split(',')
-                    rows += pad(`<tr><td class='name field-name'>${tfName(what, parent)} ${extraTag}</td><td colspan=2>${type} <span class='tag tag-enum'>enum</span><hr/> <table style='width:100%'>`)
-                    for (const k in val) {
-                        let v = val[k]
-                        if (k.startsWith('!')) {
-                            if (k.startsWith('!comment')) lastComment = lastComment ? lastComment + v : v
-                            continue
-                        }
-
-                        rows += pad(`  <tr><td class='name'>${tfName(k.startsWith('%') ? k.split(',')[1] : k)}</td><td class='name'>${tfName(v)}</td><td>${nextComment()}</td></tr>`)
-                        // parseContainer(k, v, depth + 1)
-                    }
-                    rows += pad(`</table></td></tr>`)
-                } else if (key.startsWith('%array')) {
-                    const [_, what, type, prefix] = key.split(',')
-                    if (prefix) { // Prepend the length prefix
-                        if (prefix.startsWith('$'))
-                            rows += pad(`<tr><td colspan=2><i>Length for <span class='name'>${tfName(what, parent)}</span> below is <b class='name'>${tfName(prefix)}</b> from above</td><td ${type ? 'rowspan=2' : ''}>${nextComment()}</i></td></tr>`)
-                        else
-                            rows += pad(`<tr><td class='field-name'><span class='name'>${tfName(what, parent)}</span> length</td><td>${prefix}</td><td ${type ? 'rowspan=2' : ''}>${nextComment()}</td></tr>`)
-                    }
-                    if (type) { // Inline array
-                        rows += pad(`<tr><td class='field-name'><span class='name'>${tfName(what, parent)}</span> <div class="tag tag-array">array</div></td><td>${type}</td><td>${nextComment()}</td></tr>`)
-                    } else {
-                        rows += pad(`<tr><td class='field-name'><span class='name'>${tfName(what, parent)}</span> <div class="tag tag-array">array</div></td><td colspan=2><table>`)
-                        for (const k in val) {
-                            let v = val[k]
-                            parseContainer(k, v, depth + 1, key)
-                        }
-                        rows += pad(`</table></td></tr>`)
-                    }
-                }
-                // rows += pad('</td></tr>')
-            } else if (typeof val === 'string') {
-                rows += pad(`<tr><td class='field-name name'>${tfName(key, parent)} ${extraTag}</td><td>${tfType(val)}</td><td>${nextComment()}</td></tr>`)
-            }
-        }
-
-        rows += `<div class='container'>`
-
-        // Build the TOC
-
-        let listOfTypes = []
-        const tfType = type => {
-            return listOfTypes.includes(type) ? `<a href="#${idPrefix}${type}">${type}</a>` : type
-        }
-
-        rows += `<h3>Table of Contents</h3>
+    rows += `<h3>Table of Contents</h3>
   <table class='table table-bordered table-striped' style='width:50%'>
   <thead><tr><td>Key</td><td>Name</td></tr></thead>
   <tbody>
@@ -126,65 +124,64 @@ function generate(parsedSchema, options = {}) {
   </tbody>
   </table><br/><hr/>`
 
+    // Iterate through all the types
 
-        // Iterate through all the types
+    for (const containerId in toTransform) {
+      const container = toTransform[containerId]
+      if (containerId.startsWith('!')) {
+        // Write out the comments not associated with types
+        if (containerId.startsWith('!comment')) {
+          if (container.trim().startsWith('===')) rows += `<p>${nextComment()}</p>`
+          else lastComment = lastComment ? lastComment + container : container
+        }
+        continue
+      }
 
-        for (const containerId in toTransform) {
-            const container = toTransform[containerId]
-            if (containerId.startsWith('!')) {
-                // Write out the comments not associated with types
-                if (containerId.startsWith('!comment')) {
-                    if (container.trim().startsWith('===')) rows += `<p>${nextComment()}</p>`
-                    else lastComment = lastComment ? lastComment + container : container
-                }
-                continue
-            }
+      const [_, name] = containerId.split(',')
 
-            const [_, name] = containerId.split(',')
+      if (!name || !container) continue
+      const packetId = container['!id'] || 'Type'
+      const bound = container['!bound'] || 'datatype'
+      const type = container['!typedoc'] || { server: 'Serverbound', client: 'Clientbound', both: 'Bidirectional', datatype: 'Datatype' }[bound]
 
-            if (!name || !container) continue
-            const packetId = container['!id'] || 'Type'
-            const bound = container['!bound'] || 'datatype'
-            const type = { server: 'Serverbound', client: 'Clientbound', both: 'Bidirectional', datatype: 'Datatype' }[bound]
-
-            rows += `
+      rows += `
 <div class="packet-header" id="${idPrefix}${name}">
 <a href="#${idPrefix}${name}"><div class='packet-id ${bound}'>${packetId}</div><div class='packet-name name'>${tfName(name)}</div></a>
   <small style='vertical-align:middle;float:right'>${type}</small>
 </div><br/>
     \n<p>${nextComment()}</p>\n<table class='table-bordered'>${thead}\n`
 
-            if (containerId.startsWith('%container')) { // Inline the container
-                Object.entries(container).forEach(([k, v]) => parseContainer(k, v))
-            } else {
-                parseContainer(containerId, container)
-            }
+      if (containerId.startsWith('%container')) { // Inline the container
+        Object.entries(container).forEach(([k, v]) => parseContainer(k, v))
+      } else {
+        parseContainer(containerId, container)
+      }
 
-            rows += '</table><br/><hr/><br/>'
-        }
-
-        rows += `</div>`
-
-        // console.log(rows)
-        return rows
+      rows += '</table><br/><hr/><br/>'
     }
 
-    if (options.schemaSegmented) {
-        for (const k in parsedSchema) {
-            if (k.startsWith('!')) continue
-            const value = parsedSchema[k]
-            // protodef-yaml treats "segmented" schemas as standard containers! we unwrap.
-            const key = k.split(',')[1]
-            if (key.startsWith('^')) {
-                rows += `\n<div class="sticky-container"><div class='container sticky-header'>` + key.slice(1).split('.').join(' / ') + '</div>\n'
-                work(value, key.slice(1) + '.')
-                rows += '</div>'
-            }
-        }
-        return rows
-    } else {
-        return work(parsedSchema)
+    rows += '</div>'
+
+    // console.log(rows)
+    return rows
+  }
+
+  if (options.schemaSegmented) {
+    for (const k in parsedSchema) {
+      if (k.startsWith('!')) continue
+      const value = parsedSchema[k]
+      // protodef-yaml treats "segmented" schemas as standard containers! we unwrap.
+      const key = k.split(',')[1]
+      if (key.startsWith('^')) {
+        rows += '\n<div class="sticky-container"><div class=\'container sticky-header\'>' + key.slice(1).split('.').join(' / ') + '</div>\n'
+        work(value, key.slice(1) + '.')
+        rows += '</div>'
+      }
     }
+    return rows
+  } else {
+    return work(parsedSchema)
+  }
 }
 
 const defaultHeader = `
@@ -212,6 +209,10 @@ td{
 </style>
 <style>
 body { font-family: Helvetica, Arial, sans-serif; }
+.packet-header {
+  display: flex;
+  justify-content: space-between;
+}
 .packet-header div { display: inline-block; padding: 8px; }
 .packet-name { font-size: 22px; font-weight: bold; vertical-align:middle; }
 .packet-id { 
@@ -251,14 +252,14 @@ a { text-decoration: none; }
 </style>
 </head>`
 
-function test() {
-    const fs = require('fs')
-    const file = '../test/files/proto.yaml'
-    const { parse } = require('../compiler')
-    const intermediary = parse(file, true)
-    // console.log('i', intermediary)
-    const html = generate(intermediary)
-    fs.writeFileSync('./doc.html', html)
+function test () {
+  const fs = require('fs')
+  const file = '../test/files/proto.yaml'
+  const { parse } = require('../compiler')
+  const intermediary = parse(file, true)
+  // console.log('i', intermediary)
+  const html = generate(intermediary)
+  fs.writeFileSync('./doc.html', html)
 }
 
 module.exports = generate
