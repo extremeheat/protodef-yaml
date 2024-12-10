@@ -13,15 +13,6 @@ function generate (parsedSchema, options = {}) {
 
   const thead = '<thead><tr><td>Field Name</td><td>Field Type</td><td>Notes</td></tr></thead>'
 
-  //   function toTitleCase (str) {
-  //     return str.replace(
-  //       /\w\S*/g,
-  //       function (txt) {
-  //         return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
-  //       }
-  //     )
-  //   }
-
   const isStatement = key => key.startsWith('if ') || (key === 'default')
   const tfName = (key, parent) => {
     if (isStatement(key) && (parent?.includes('%switch'))) return `<span class='fake'>${key.replace('if', 'is').replace(/_/g, ' ')}</span>`
@@ -67,7 +58,7 @@ function generate (parsedSchema, options = {}) {
           rows += pad('</table></td></tr>')
         } else if (key.startsWith('%map')) {
           const [_, what, type] = key.split(',')
-          rows += pad(`<tr><td class='name field-name'>${tfName(what, parent)} ${extraTag}</td><td colspan=2>${type} <span class='tag tag-enum'>enum</span><hr/> <table style='width:100%'>`)
+          rows += pad(`<tr><td class='name field-name'>${tfName(what, parent)} ${extraTag}</td><td colspan=2  class="vpad"><div style='padding:8px'>${type} <span class='tag tag-enum'>enum</span></div><table>`)
           for (const k in val) {
             const v = val[k]
             if (k.startsWith('!')) {
@@ -82,7 +73,7 @@ function generate (parsedSchema, options = {}) {
         } else if (key.startsWith('%array')) {
           const [_, what, type, prefix] = key.split(',')
           if (prefix) { // Prepend the length prefix
-            if (prefix.startsWith('$')) { rows += pad(`<tr><td colspan=2><i>Length for <span class='name'>${tfName(what, parent)}</span> below is <b class='name'>${tfName(prefix)}</b> from above</td><td ${type ? 'rowspan=2' : ''}>${nextComment()}</i></td></tr>`) } else { rows += pad(`<tr><td class='field-name'><span class='name'>${tfName(what, parent)}</span> length</td><td>${prefix}</td><td ${type ? 'rowspan=2' : ''}>${nextComment()}</td></tr>`) }
+            if (prefix.startsWith('$')) { rows += pad(`<tr><td colspan=2 class="vpad"><i>Length for <span class='name'>${tfName(what, parent)}</span> below is <b class='name'>${tfName(prefix)}</b> from above</td><td ${type ? 'rowspan=2' : ''}>${nextComment()}</i></td></tr>`) } else { rows += pad(`<tr><td class='field-name field-implicit'><span class='name'>${tfName(what, parent)}</span> length</td><td class="field-implicit">${prefix}</td><td ${type ? 'rowspan=2' : ''}>${nextComment()}</td></tr>`) }
           }
           if (type) { // Inline array
             rows += pad(`<tr><td class='field-name'><span class='name'>${tfName(what, parent)}</span> <div class="tag tag-array">array</div></td><td>${type}</td><td>${nextComment()}</td></tr>`)
@@ -115,12 +106,12 @@ function generate (parsedSchema, options = {}) {
   <thead><tr><td>Key</td><td>Name</td></tr></thead>
   <tbody>
     ${Object.entries(toTransform).map(([k, v]) => {
-            if (k.startsWith('!') && !k.startsWith('%')) return ''
-            const [type, name] = k.split(',')
-            if (!name) return ''
-            listOfTypes.push(name)
-            return (name.startsWith('packet_') && v?.['!id']) ? `<tr><td><a href="#${idPrefix}${name}">0x${v['!id'].toString(16)}</a></td><td><a href="#${idPrefix}${name}">${name}</a></td></tr>` : `<tr><td><a href="#${idPrefix}${name}">Type</a><td class='name'>${tfType(name)}</td></tr>`
-        }).join('\n')}
+      if (k.startsWith('!') && !k.startsWith('%')) return ''
+      const [type, name] = k.split(',')
+      if (!name) return ''
+      listOfTypes.push(name)
+      return (name.startsWith('packet_') && v?.['!id']) ? `<tr><td><a href="#${idPrefix}${name}">0x${v['!id'].toString(16)}</a></td><td><a href="#${idPrefix}${name}">${name}</a></td></tr>` : `<tr><td><a href="#${idPrefix}${name}">Type</a><td class='name'>${tfType(name)}</td></tr>`
+    }).join('\n')}
   </tbody>
   </table><br/><hr/>`
 
@@ -190,25 +181,19 @@ const defaultHeader = `
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-wEmeIV1mKuiNpC+IOBjI7aAzPcEZeedi5yW5f2yOq55WWLwNGmvvx4Um1vskeMj0" crossorigin="anonymous">
 <style>
-body{font-family:sans-serif;}
-td{padding:8px;}
-table {
-  /*width: 100%;*/
-}
-tr{
-  /*width:100%;*/
-}
-td{
-  border-bottom:1px solid #E0E0E0;
-}
-.bordered td {
-  border-right: 1px solid #E0E0E0;
-}
-.field-name { font-weight:bold;}
-.fake{font-weight:normal;font-style:italic;}
-</style>
-<style>
 body { font-family: Helvetica, Arial, sans-serif; }
+td { padding: 8px; border: 1px solid #E0E0E0; }
+td[colspan="2"] { padding: 0px; }
+td:empty { display: none; }
+td.vpad { padding:8px 0; }
+
+tr:hover { background-color: #FAFAFE; }
+
+/*.bordered td { border: 1px solid #E0E0E0; }*/
+.field-name { font-weight: bold; }
+.field-implicit { background-color: #F0F0FF; }
+.fake { font-weight:normal; font-style:italic; }
+ 
 .packet-header {
   display: flex;
   justify-content: space-between;
@@ -241,16 +226,34 @@ body { font-family: Helvetica, Arial, sans-serif; }
 .field-title { font-weight: bold; }
 td { vertical-align: middle; text-align: center; }
 table table {
-  margin: -8px;
+  width: 100%;
 }
 .table-bordered { border: 1px solid #E0E0E0; }
 thead td { font-weight: bold; background-color: #E0E0E0; }
 a { text-decoration: none; }
 .name { text-transform: capitalize; }
 .sitkcy-container { position: relative; }
-.sticky-header { position: sticky; top: 0; text-align: center; font-size: 1.5rem; background-color: white; padding: 8px; border-radius: 8px; }
+.sticky-header { position: sticky; top: 4px; text-align: center; font-size: 1.4rem; background-color: #f0f0f050; padding: 8px 16px; border-radius: 8px; width: fit-content; }
 </style>
-</head>`
+</head>
+`
+/*
+<div class="container" style="text-align:center;">
+  <hr/>
+  <!-- checkbox -->
+  <input type="checkbox" id="menu-toggle">
+  <label for="menu-toggle">Toggle ProtoDef Names</label>
+  <hr/>
+</div>
+*/
+//   function toTitleCase (str) {
+//     return str.replace(
+//       /\w\S*/g,
+//       function (txt) {
+//         return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
+//       }
+//     )
+//   }
 
 function test () {
   const fs = require('fs')
