@@ -164,7 +164,8 @@ function generate (parsedSchema, options = {}) {
       // protodef-yaml treats "segmented" schemas as standard containers! we unwrap.
       const key = k.split(',')[1]
       if (key.startsWith('^')) {
-        rows += '\n<div class="sticky-container"><div class=\'container sticky-header\'>' + key.slice(1).split('.').join(' / ') + '</div>\n'
+        const k = key.slice(1)
+        rows += `\n<div id="${k}" class="sticky-container"><a href="#${k}"><div class='container sticky-header'>` + k.split('.').join(' / ') + '</div></a>\n'
         work(value, key.slice(1) + '.')
         rows += '</div>'
       }
@@ -232,7 +233,7 @@ table table {
 thead td { font-weight: bold; background-color: #E0E0E0; }
 a { text-decoration: none; }
 .name { text-transform: capitalize; }
-.sitkcy-container { position: relative; }
+.sticky-container { position: relative; }
 .sticky-header { position: sticky; top: 4px; text-align: center; font-size: 1.4rem; background-color: #f0f0f050; padding: 8px 16px; border-radius: 8px; width: fit-content; }
 </style>
 </head>
