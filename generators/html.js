@@ -2,9 +2,10 @@
 const showdown = require('showdown')
 
 /**
- *
+ * Generates HTML from a given intermediary schema
  * @param {object} toTransform Intermediary YAML turned to JSON
- * @param {{ toTitleCase, includeHeader }} options Generation options
+ * @param {{ includeHeader, schemaSegmented }} options Generation options. `includeHeader` includes the default header,
+ *  `schemaSegmented` if the schema is split into sections (ie independent client and server bound packets).
  */
 function generate (parsedSchema, options = {}) {
   let rows = options.includeHeader ? defaultHeader : ''
@@ -152,8 +153,6 @@ function generate (parsedSchema, options = {}) {
     }
 
     rows += '</div>'
-
-    // console.log(rows)
     return rows
   }
 
@@ -161,7 +160,7 @@ function generate (parsedSchema, options = {}) {
     for (const k in parsedSchema) {
       if (k.startsWith('!')) continue
       const value = parsedSchema[k]
-      // protodef-yaml treats "segmented" schemas as standard containers! we unwrap.
+      // protodef-yaml treats "segmented" schemas as standard containers
       const key = k.split(',')[1]
       if (key.startsWith('^')) {
         const k = key.slice(1)
@@ -190,7 +189,6 @@ td.vpad { padding:8px 0; }
 
 tr:hover { background-color: #FAFAFE; }
 
-/*.bordered td { border: 1px solid #E0E0E0; }*/
 .field-name { font-weight: bold; }
 .field-implicit { background-color: #F0F0FF; }
 .fake { font-weight:normal; font-style:italic; }
@@ -215,15 +213,9 @@ tr:hover { background-color: #FAFAFE; }
 .bound-both { background-color: #49cc90; color:white; }
 .bound-server { background-color: #597794; color:white; }
 .tag { border-radius: 10px; margin: 4px; padding: 2px 4px 2px 4px; background-color: lightblue; background-color: black; color: white; }
-.tag-switch {
-  background-color: #F0F0F0; border: 1px solid #A0A0A0; color: black; padding: 6px;
-}
-.tag-optional {
-  background-color: gold; border: 1px solid #A0A0A0; color: black; padding: 6px;
-}
-.tag-array {
-  background-color: navy;
-}
+.tag-switch { background-color: #F0F0F0; border: 1px solid #A0A0A0; color: black; padding: 6px; }
+.tag-optional { background-color: gold; border: 1px solid #A0A0A0; color: black; padding: 6px; }
+.tag-array { background-color: navy; }
 .field-title { font-weight: bold; }
 td { vertical-align: middle; text-align: center; }
 table table {
@@ -238,23 +230,6 @@ a { text-decoration: none; }
 </style>
 </head>
 `
-/*
-<div class="container" style="text-align:center;">
-  <hr/>
-  <!-- checkbox -->
-  <input type="checkbox" id="menu-toggle">
-  <label for="menu-toggle">Toggle ProtoDef Names</label>
-  <hr/>
-</div>
-*/
-//   function toTitleCase (str) {
-//     return str.replace(
-//       /\w\S*/g,
-//       function (txt) {
-//         return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
-//       }
-//     )
-//   }
 
 function test () {
   const fs = require('fs')

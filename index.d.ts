@@ -3,6 +3,6 @@ module "protodef-yaml" {
     export function compile(inputFile: string, outputFile: string): object
     // Returns intermediate representation for protodef-yaml
     export function parse(inputFile: string, includeComments?: boolean, followImports?: boolean): object
-    export function genHTML(parsedObject: object, options?: { toTitleCase?: boolean, includeHeader?: boolean, schemaSegmented?: boolean }): string
+    export function genHTML(parsedObject: object, options?: { includeHeader?: boolean, schemaSegmented?: boolean }): string
     export function genYAML(json: object): string
 }
