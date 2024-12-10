@@ -1,3 +1,8 @@
+## 1.5.5
+* [HTML generation improvements (#26)](https://github.com/extremeheat/protodef-yaml/commit/97f6fa74e501d3d9b8dd213c2142ec63d88ef82f) (thanks @extremeheat)
+* [Lint (#25)](https://github.com/extremeheat/protodef-yaml/commit/3ca5c9f014516a6d5c5617ba20f703c32a3fb9dd) (thanks @extremeheat)
+* [Fix comment new line handling (#24)](https://github.com/extremeheat/protodef-yaml/commit/fac2db80d60941c0b4a3d9812d2592bdf1cc79d2) (thanks @extremeheat)
+
 ## 1.5.4
 * [Fix array integer count](https://github.com/extremeheat/protodef-yaml/commit/00190ecb59a79724a10e6d1ac4e6c8653fdf5d46) (thanks @extremeheat)
 
