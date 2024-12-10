@@ -78,7 +78,7 @@ Compile input YAML file into output JSON file
 ### parse(inputFile: string, includeComments?: boolean, followImports?: boolean)
 Compile input YAML file into a JavaScript object.
 
-### genHTML(toTransform: object, options?: { toTitleCase, includeHeader, schemaSegmented })
+### genHTML(toTransform: object, options?: { includeHeader, schemaSegmented })
 * toTransform - Intermediary YAML turned to JSON
 * options - Generation options
   * includeHeader - Add extra css, specifiy this unless you want to embed into a existing webpage

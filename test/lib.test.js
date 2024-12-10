@@ -45,8 +45,45 @@ it('transforms mcpc with structuring carets to json', function () {
 
 it('transforms mcpc with structuring carets to html', function () {
   const intermediary = parse(f`mcpc.yml`, true)
-  // fs.writeFileSync(f`__mcpc.json`, JSON.stringify(intermediary, null, 2))
-  const html = genHTML(intermediary, { includeHeader: true, schemaSegmented: true })
+
+  // Add additional information to the schema before passing to HTML gen
+  function prepareMcpc (intermediary) {
+    // fs.writeFileSync(f`__mcpc.json`, JSON.stringify(intermediary, null, 2))
+    const updated = structuredClone(intermediary)
+    for (const key in updated) {
+      if (key.startsWith('%container,^')) {
+        const region = key.split(',')[1].replace('^', '')
+        const [status, direction] = region.split('.')
+        const entries = updated[key]
+        const packetMapper = entries['%container,packet,']
+        if (packetMapper && packetMapper['%map,name,varint']) {
+          const n = Object.entries(packetMapper['%map,name,varint'])
+          const p = Object.fromEntries(Object.entries(packetMapper['%switch,params,name'] ?? {}).map(([k, v]) => [k.replace('if ', ''), v]))
+          const packetMap = Object.fromEntries(n.map(([k, v]) => [p[v], k.split(',')[1]]))
+          for (const k in entries) {
+            if (k.startsWith('%container,')) {
+              const [, name] = k.split(',')
+              const id = parseInt(packetMap[name])
+              entries[k]['!typedoc'] = `${status} / ${direction} / ${name}`
+              if (isNaN(id)) {
+                entries[k]['!id'] = packetMap[name]
+              } else {
+                const hex = '0x' + id.toString(16).padStart(2, '0')
+                entries[k]['!id'] = id
+                entries[k]['!typedoc'] += ` (${hex})`
+              }
+              entries[k]['!bound'] = direction === 'toServer' ? 'server' : 'client'
+            }
+          }
+        }
+      }
+    }
+    // fs.writeFileSync(f`__mcpc.json`, JSON.stringify(updated, null, 2))
+    return updated
+  }
+
+  const updated = prepareMcpc(intermediary)
+  const html = genHTML(updated, { includeHeader: true, schemaSegmented: true })
   fs.writeFileSync(f`mcpc.html`, html)
   assert(fs.readFileSync(f`mcpc.html`))
 })
