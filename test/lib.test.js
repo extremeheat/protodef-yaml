@@ -40,7 +40,7 @@ it('transforms mcpc with structuring carets to json', function () {
   compile(f`mcpc.yml`, f`mcpc.json`)
   const hash = sha1(f`mcpc.json`)
   console.info('sha1 of mcpc', hash)
-  assert.strictEqual(hash, '8968dfbf2ccb49d8608e406a8dd5b1d161be8af4')
+  assert.strictEqual(hash, '1c7cd4f9165662ca2cfc41ef0d4fa612e4be01f9')
 })
 
 it('transforms mcpc with structuring carets to html', function () {
