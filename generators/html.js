@@ -132,7 +132,7 @@ function generate (parsedSchema, options = {}) {
       const [_, name] = containerId.split(',')
 
       if (!name || !container) continue
-      const packetId = container['!id'] || 'Type'
+      const packetId = container['!id'] ?? 'Type'
       const bound = container['!bound'] || 'datatype'
       const type = container['!typedoc'] || { server: 'Serverbound', client: 'Clientbound', both: 'Bidirectional', datatype: 'Datatype' }[bound]
 

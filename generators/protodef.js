@@ -50,24 +50,28 @@ function toYAML (input, followImports = true, document = false) {
 
   function pars () {
     let modified = false
+    let lastNonCommentPaddingLevel
     for (let i = 0; i < lines.length; i++) {
       const trimedLine = lines[i].trim()
       let [key, val] = trimedLine.endsWith(':') ? [trimedLine.slice(0, -1), ''] : trimedLine.split(': ', 2)
       const thisLevel = getIndentation(lines[i])
       const nextLevel = getIndentation(lines[i + 1] || '')
       if (key.startsWith('#')) {
+        const commentPadLevel = (thisLevel === 0) ? lastNonCommentPaddingLevel : thisLevel
         if ((key.startsWith('# ') || key === '#') && startedDocumenting && document) { // Convert the YAML comments to entries
           key = '!comment,' + i
           val = lines[i].replace('#', '')
           if (val.trim() === '') { // blank new line
-            lines[i] = pad(thisLevel, `${key}: "\\n"`)
+            lines[i] = pad(commentPadLevel, `${key}: "\\n"`)
           } else {
-            lines[i] = pad(thisLevel, key + ': |\n')
-            lines[i] += pad(thisLevel + 3, val)
+            lines[i] = pad(commentPadLevel, key + ': |\n')
+            lines[i] += pad(commentPadLevel + 3, val)
           }
         } else {
           continue
         }
+      } else {
+        lastNonCommentPaddingLevel = thisLevel
       }
       key = key.trim(); val = val ? val.trim() : ''
       if (key === '_') {
@@ -161,6 +165,18 @@ function toYAML (input, followImports = true, document = false) {
         } else if (val.includes('=>')) {
           const [sizeType, valueType] = val.split('=>')
           lines[i] = pad(thisLevel, `"%map,${key},${sizeType.trim()},${valueType.trim()}":`)
+          if (document) { // we need index numbers for the docs
+            let autoIncrementPos = 0
+            for (let j = i + 1; j < lines.length; j++) {
+              if (lines[j].startsWith('- '.padStart(thisLevel + 2))) {
+                lines[j] = lines[j].replace('- ', '  ' + autoIncrementPos++ + ': ')
+              } else if (lines[j].startsWith('#'.padStart(thisLevel + 1))) { // we need to pad the comments
+                lines[j] = lines[j].replace('#'.padStart(thisLevel + 1), '  ' + '#'.padStart(thisLevel + 1))
+              } else {
+                break
+              }
+            }
+          }
         }
       }
     }
