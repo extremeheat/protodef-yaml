@@ -137,8 +137,8 @@ function generate (parsedSchema, options = {}) {
 
       rows += `
 <div class="packet-header" id="${idPrefix}${name}">
-<a href="#${idPrefix}${name}"><div class='packet-id ${bound}'>${packetId}</div><div class='packet-name name'>${tfName(name)}</div></a>
-  <small style='vertical-align:middle;float:right'>${type}</small>
+<a href="#${idPrefix}${name}"><div class='packet-id bound-${bound}'>${packetId}</div><div class='packet-name name'>${tfName(name)}</div></a>
+  <span style='vertical-align:middle;float:right'>${type}</span>
 </div><br/>
     \n<p>${nextComment()}</p>\n<table class='table-bordered'>${thead}\n`
 
@@ -209,10 +209,10 @@ tr:hover { background-color: #FAFAFE; }
   text-align: center;
   border-radius: 3px;
 }
-.datatype { background-color: #941c9f; color:white; }
-.client { background-color: #61affe; color:white; }
-.both { background-color: #49cc90; color:white; }
-.server { background-color: #597794; color:white; }
+.bound-datatype { background-color: #941c9f; color:white; }
+.bound-client { background-color: #61affe; color:white; }
+.bound-both { background-color: #49cc90; color:white; }
+.bound-server { background-color: #597794; color:white; }
 .tag { border-radius: 10px; margin: 4px; padding: 2px 4px 2px 4px; background-color: lightblue; background-color: black; color: white; }
 .tag-switch {
   background-color: #F0F0F0; border: 1px solid #A0A0A0; color: black; padding: 6px;
