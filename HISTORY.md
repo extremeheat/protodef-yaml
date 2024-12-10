@@ -1,3 +1,6 @@
+## 1.5.6
+* [Fix comment handling for enums (#28)](https://github.com/extremeheat/protodef-yaml/commit/2e7a98461e7e781a66ed78067fcf1327cb86fb39) (thanks @extremeheat)
+
 ## 1.5.5
 * [HTML generation improvements (#26)](https://github.com/extremeheat/protodef-yaml/commit/97f6fa74e501d3d9b8dd213c2142ec63d88ef82f) (thanks @extremeheat)
 * [Lint (#25)](https://github.com/extremeheat/protodef-yaml/commit/3ca5c9f014516a6d5c5617ba20f703c32a3fb9dd) (thanks @extremeheat)
