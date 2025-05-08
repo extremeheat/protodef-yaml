@@ -119,6 +119,8 @@ function toYAML (input, followImports = true, document = false) {
 
       log('i', i, val)
       log(thisLevel, nextLevel, nextLevel > thisLevel, val.trim())
+      // Ignore comment parts when processing values
+      val = val.split('#')[0].trim()
       const isParent = nextLevel > thisLevel
       if (isParent) {
         modified = true
