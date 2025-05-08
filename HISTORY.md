@@ -1,3 +1,6 @@
+## 1.5.7
+* [Fix inline comment handling for values](https://github.com/extremeheat/protodef-yaml/commit/8426fed4ae20adcb8843ae31b46153c571475b8e) (thanks @extremeheat)
+
 ## 1.5.6
 * [Fix comment handling for enums (#28)](https://github.com/extremeheat/protodef-yaml/commit/2e7a98461e7e781a66ed78067fcf1327cb86fb39) (thanks @extremeheat)
 

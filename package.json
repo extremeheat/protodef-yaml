@@ -1,6 +1,6 @@
 {
   "name": "protodef-yaml",
-  "version": "1.5.6",
+  "version": "1.5.7",
   "description": "Transforms YAML-like syntax to ProtoDef JSON schema",
   "main": "index.js",
   "bin": "./cli.js",
