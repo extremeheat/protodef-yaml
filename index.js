@@ -1,6 +1,6 @@
-const { compile, parse } = require('./compiler')
-const genHTML = require('./generators/html')
-const genYAML = require('./generators/json2yml')
+const { compile, parse } = require('./src/compiler')
+const genHTML = require('./src/generators/html')
+const genYAML = require('./src/generators/json2yml')
 
 module.exports = { compile, parse, genHTML, genYAML }
 

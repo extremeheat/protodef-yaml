@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-const { compile, parse } = require('./compiler')
-const htmlGen = require('./generators/html')
+const { compile, parse } = require('./src/compiler')
+const htmlGen = require('./src/generators/html')
 const fs = require('fs')
 
 if (!process.argv[2]) {
